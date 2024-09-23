@@ -37,9 +37,37 @@ namespace task
         }
         public int MaxHealth { get; protected set; }
 
-        public int Attack { get; protected set; }
+        /// <summary>
+        /// 기본 공격력
+        /// </summary>
+        public int BaseAttack { get; protected set; }
+        /// <summary>
+        /// 장비 적용 공격력
+        /// </summary>
+        public int EquipAttack { get; protected set; }
+        /// <summary>
+        /// 총합 공격력
+        /// </summary>
+        public int Attack 
+        {
+            get { return BaseAttack + EquipAttack; }
+        }
 
-        public int Defense { get; protected set; }
+        /// <summary>
+        /// 기본 방어력
+        /// </summary>
+        public int BaseDefense { get; protected set; }
+        /// <summary>
+        /// 장비 적용 방어력
+        /// </summary>
+        public int EquipDefense { get; protected set; }
+        /// <summary>
+        /// 총합 방어력
+        /// </summary>
+        public int Defense 
+        { 
+            get { return BaseDefense + EquipDefense; }
+        }
 
         int _lv = 1;
         public int Level
@@ -123,8 +151,22 @@ namespace task
             _ownnedItems = temp;
         }
 
-        public void EquipItem(int id) 
+        public void EquipItem(Item item) 
         {
+            if (_isEquipped.ContainsKey(item.id))
+                _isEquipped[item.id] = !_isEquipped[item.id];
+            else
+                _isEquipped[item.id] = true;
+
+            switch (item.type)
+            {
+                case EItemType.Weapon:
+                    EquipAttack += _isEquipped[item.id] ? item.value : -item.value;
+                    break;
+                case EItemType.Armor:
+                    EquipDefense += _isEquipped[item.id] ? item.value : -item.value;
+                    break;
+            }
 
         }
     }

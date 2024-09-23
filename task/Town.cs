@@ -44,8 +44,7 @@ namespace task
 
         public void Act()
         {
-            Console.WriteLine();
-            Console.WriteLine("1. 상태 보기\n2. 인벤토리\n3. 상점\n");
+            Console.WriteLine("\n1. 상태 보기\n2. 인벤토리\n3. 상점\n");
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 1, 3);
 
             switch (act)
@@ -91,8 +90,8 @@ namespace task
             sb.Clear();
             sb.Append($"Lv. {string.Format("{0:0#}", Player.Level)}\n");
             sb.Append($"{Player.Name} ( {className} )\n");
-            sb.Append($"공격력 : {Player.Attack}\n");
-            sb.Append($"방어력 : {Player.Defense}\n");
+            sb.Append($"공격력 : {Player.BaseAttack} {(Player.EquipAttack > 0 ? $"(+{Player.EquipAttack})" : "")}\n");
+            sb.Append($"방어력 : {Player.BaseDefense} {(Player.EquipDefense > 0 ? $"(+{Player.EquipDefense})" : "")}\n");
             sb.Append($"체력 : {Player.Health} / {Player.MaxHealth}\n");
             sb.Append($"Gold : {Player.Gold} G\n");
 
@@ -127,10 +126,23 @@ namespace task
             Console.Clear();
             SetInventoryInfo(1);
 
-            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 0);
+            // 목록 표기
+            Item[] ownned;
+            Dictionary<int, bool> equipped;
+            Player.GetItem(out ownned, out equipped);
+
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, ownned.Length);
+            if (act == 0) // 나가기
+            {
+                ArriveScene();
+                return;
+            }
 
             // 장착 관리
-            // ArriveScene();
+            act--;
+            Player.EquipItem(ownned[act]);
+
+            EquipItem();
         }
 
         /// <summary>

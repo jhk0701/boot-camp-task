@@ -42,9 +42,9 @@ namespace DataDefinition
         public string GetDesc()
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append($"{name}\t");
+            sb.Append($"{name, -10}\t");
             sb.Append($"| {(type.Equals(EItemType.Weapon) ? "공격력" : "방어력")} +{value}\t");
-            sb.Append($"| {description}\t");
+            sb.Append($"| {description, -30}\t");
 
             return sb.ToString();
         }

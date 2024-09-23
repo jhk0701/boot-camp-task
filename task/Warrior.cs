@@ -18,8 +18,8 @@ namespace task
             MaxHealth = 100;
             Health = MaxHealth;
 
-            Attack = 10;
-            Defense = 10;
+            BaseAttack = 10;
+            BaseDefense = 10;
         }
 
         public override void GetDamage(int val)
