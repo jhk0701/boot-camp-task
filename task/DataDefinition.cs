@@ -182,14 +182,6 @@ namespace DataDefinition
 
             string data = JsonSerializer.Serialize(_gameData, opt);
             File.WriteAllText(FILE_PATH, data);
-
-            // 문제 1
-            // 데이터가 공백으로 출력
-            // https://stackoverflow.com/questions/58784499/system-text-json-jsonserializer-serialize-returns-empty-json-object
-            // https://stackoverflow.com/questions/58139759/how-to-use-class-fields-with-system-text-json-jsonserializer
-            // 해결
-            // In .NET Core 3.x 버전에선 클래스 필드를 직열화할 수 없었음.
-            // In .NET 5 버전 이후부터 옵션을 추가해서 내부 필드를 직열화할 수 있게 됨.
         }
         public void Save(Character player) 
         { 
@@ -214,33 +206,24 @@ namespace DataDefinition
             else
                 return false;
         }
-        public Character LoadCharater()
-        {
-            return _gameData.Player;
-        }
-        public Dictionary<int, bool> LoadSellingInfo()
-        {
-            if (_gameData.ItemSellingInfo == null)
-                return new Dictionary<int, bool>();
-            else
-                return _gameData.ItemSellingInfo;
-        }
         
-
         bool IsVaild(string text, out GameData data)
         {
-            data = JsonSerializer.Deserialize<GameData>(text);
-            // 문제 2
-            // class deserialize 시 null
-            // 1. 접근성
-            // 2. 데이터 모델 프로퍼티화 여부
+            try
+            {
+                data = JsonSerializer.Deserialize<GameData>(text);
+            }
+            catch
+            {
+                data = new GameData();
+                return false;
+            }
 
             if (data.Player == null)
                 return false;
 
             CharacterInitData initData = CharacterInitDatas[(int)data.Player.Class];
-            // 민감한 사항
-            // 공격력, 방어력, 체력 관련 수치 조작
+            // 민감한 사항 1. 공격력, 방어력, 체력 관련 수치 조작
             float expectedAttack = data.Player.Level * 0.5f + initData.attack;
             float expectedDefense = data.Player.Level * 1f + initData.defense;
             if (data.Player.BaseAttack > expectedAttack ||
@@ -248,10 +231,14 @@ namespace DataDefinition
                 data.Player.MaxHealth != initData.maxHealth)
                 return false;
 
-            // 더 높은 수준의 유효성 검사가 필요함.
+            // 더 엄격한 유효성 검사가 필요함.
 
             return true;
         }
 
+        public GameData GetGameData()
+        {
+            return _gameData;
+        }
     }
 }

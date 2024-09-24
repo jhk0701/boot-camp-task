@@ -21,9 +21,11 @@ namespace task
         {
             Name = name;
             // 데이터 읽기
-            isSoldOut = DataSet.GetInstance().LoadSellingInfo();
+            isSoldOut = DataSet.GetInstance().GetGameData().ItemSellingInfo;
+            if (isSoldOut == null)
+                isSoldOut = new Dictionary<int, bool>();
 
-            if (isSoldOut == null || isSoldOut.Count != DataSet.GetInstance().Items.Length)
+            if (isSoldOut.Count != DataSet.GetInstance().Items.Length)
             {
                 Item[] items = DataSet.GetInstance().Items;
                 for (int i = 0; i < items.Length; i++)
@@ -94,7 +96,7 @@ namespace task
             string className = DataSet.GetInstance().CharacterInitDatas[(int)Player.Class].name;
 
             Utility.ShowScript(
-                $"Lv. {string.Format("{0:0#}", Player.Level)} ({Player.Exp / (float)Player.Level * 100f }%)\n",
+                $"Lv. {string.Format("{0:0#}", Player.Level)} ({string.Format("{0:N2}", Player.Exp / (float)Player.Level * 100f)}%)\n",
                 $"{Player.Name} ( {className} )\n",
                 $"공격력 : {Player.BaseAttack} {(Player.EquipAttack > 0 ? $"(+{Player.EquipAttack})" : "")}\n",
                 $"방어력 : {Player.BaseDefense} {(Player.EquipDefense > 0 ? $"(+{Player.EquipDefense})" : "")}\n",
@@ -174,10 +176,11 @@ namespace task
             for (int i = 0; i < owned.Length; i++)
             {
                 bool isEquipped = equipped.ContainsKey(owned[i].id) && equipped[owned[i].id];
-                Utility.ShowScript($"- {(opt == 0 ? "" : i + 1)} {(isEquipped ? "[E]" : "")}{owned[i].GetDesc()}\n\n");
+                Utility.ShowScript($"- {(opt == 0 ? "" : i + 1)} {(isEquipped ? "[E]" : "")}{owned[i].GetDesc()}");
             }
 
             Utility.ShowScript(
+                "\n",
                 opt == 0 ?
                 "1. 장착 관리\n0. 나가기\n" :
                 "0. 나가기\n"
@@ -485,6 +488,8 @@ namespace task
                 SetRest();
 
                 Utility.ShowScript("휴식을 완료했습니다.");
+                DataSet.GetInstance().Save(Player);
+
                 Rest();
             }
             else
