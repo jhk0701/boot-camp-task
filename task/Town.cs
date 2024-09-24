@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DataDefinition;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace task
 {
@@ -47,19 +48,25 @@ namespace task
 
         public void Act()
         {
-            Console.WriteLine("\n1. 상태 보기\n2. 인벤토리\n3. 상점\n");
-            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 1, 3);
+            Console.WriteLine("\n1. 상태 보기\n2. 인벤토리\n3. 상점\n4. 던전입장\n5. 휴식하기\n");
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 1, 5);
 
             switch (act)
             {
-                case 1:
+                case 1: // 상태 보기
                     ShowStatus();
                     break;
-                case 2:
+                case 2: // 인벤토리
                     ShowInventory();
                     break;
-                case 3:
+                case 3: // 상점
                     ShowStore();
+                    break;
+                case 4: // 던전
+                    ShowDungeon();
+                    break;
+                case 5: // 휴식
+                    ShowRest();
                     break;
             }
         }
@@ -267,6 +274,9 @@ namespace task
             BuyItem(ref items);
         }
 
+        /// <summary>
+        /// 아이템 판매
+        /// </summary>
         void SellItem()
         {
             Item[] owned;
@@ -308,6 +318,7 @@ namespace task
             StringBuilder sb = new StringBuilder();
             sb.Append($"상점{(opt > 0 ? (opt == 1 ? "-아이템 구매" : "-아이템 판매") : "")}");
             sb.Append("\n필요한 아이템을 얻을 수 있는 상점입니다.\n\n");
+
             sb.Append($"[보유 골드]\n{Player.Gold} G\n\n");
             sb.Append("[아이템 목록\n");
             // 목록 표기
@@ -334,5 +345,129 @@ namespace task
         #endregion
 
 
+        #region ### 던전 ###
+
+        void ShowDungeon()
+        {
+            Dungeon[] dungeons = DataSet.GetInstance().Dungeons;
+
+            Console.Clear();
+
+            StringBuilder sb = new StringBuilder();
+            sb.Append("던전입장\n이곳에서 던전으로 들어가기전 활동을 할 수 있습니다.\n\n");
+            for (int i = 0; i < dungeons.Length; i++)
+                sb.Append($"{i + 1}. {dungeons[i].name}\t| 방어력 {dungeons[i].recommendedDefense} 이상 권장\n");
+
+            sb.Append("0. 나가기\n");
+            Console.WriteLine(sb.ToString());
+
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, dungeons.Length);
+
+            if(act == 0) // 나가기
+            {
+                ArriveScene();
+                return;
+            }
+
+            EnterDungeon(dungeons[act - 1]);
+        }
+
+        void EnterDungeon(Dungeon dungeon)
+        {
+            Random r = new Random();
+            bool isClear = true;
+
+            // 던전 수행 여부 : 방어력
+            if (dungeon.recommendedDefense > Player.Defense)
+            {
+                // 권장 방어력 미만 40% 확률 실패
+                int p = r.Next(1, 101);
+                isClear = p > 40;
+            }
+
+            Console.Clear();
+            StringBuilder sb = new StringBuilder();
+
+            if (isClear)
+            {
+                // 권장 방어력 이상 던전 클리어
+                sb.Append($"던전 클리어\n축하합니다!!\n{dungeon.name}을 클리어 하였습니다.\n\n");
+                sb.Append("[탐험 결과]\n");
+
+                // 권장 방어력에 따라 종료 시 체력 소모
+                // 기본 체력 감소 : 20 ~ 35 중 랜덤
+                // 추가 감소량 : 내 방어력 - 권장 방어력
+                // 체력 소모 -= 기본 체력 감소 - 추가 감소량
+                int damage = r.Next(20, 36) - (Player.Defense - dungeon.recommendedDefense);
+                sb.Append($"체력 {Player.Health} -> {(Player.Health - damage > 0 ? Player.Health - damage : 0)}\n");
+
+                Player.GetDamage(damage);
+
+                // 보상
+                // 기본 골드 보상
+                // + 공격력의 10 ~ 20% 만큼의 추가 보상
+                float additivePer = r.Next(Player.Attack, Player.Attack * 2 + 1) * 0.01f;
+                int reward = (int)(dungeon.rewardGold * (1 + additivePer));
+                sb.Append($"Gold {Player.Gold} G -> {Player.Gold + reward} G\n");
+
+                Player.Gold += reward;
+
+                // 클리어 시, 경험치 쌓기
+                Player.Exp++;
+            }
+            else
+            {
+                sb.Append($"던전 실패\n{dungeon.name}을 실패했습니다.\n\n");
+                sb.Append("[실패 페널티]\n");
+                // 실패 페널티 : 체력 절반 감소 (현재 체력 기준)
+                int damage = (int)(Player.Health * 0.5f);
+                sb.Append($"체력 {Player.Health} -> {Player.Health - damage}\n");
+                Player.GetDamage(damage);
+            }
+
+            sb.Append("\n0. 나가기\n");
+            Console.WriteLine(sb.ToString());
+
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 0);
+            ArriveScene();
+        }
+
+        #endregion
+
+
+        #region ### 휴식 ###
+
+        void ShowRest()
+        {
+            int cost = 500;
+
+            Console.Clear();
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append("휴식하기\n");
+            sb.Append($"{cost} G를 내면 체력을 회복할 수 있습니다. (보유 골드 : {Player.Gold} G)\n\n");
+            sb.Append("1. 휴식하기\n0. 나가기\n");
+
+            Console.WriteLine(sb.ToString());
+
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.");
+
+            if (act == 0) // 나가기
+            {
+                ArriveScene();
+                return;
+            }
+
+            if (Player.Gold >= cost)
+            {
+                
+            }
+            else
+            {
+
+            }
+        }
+
+        #endregion
     }
 }

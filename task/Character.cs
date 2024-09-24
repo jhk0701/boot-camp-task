@@ -115,6 +115,10 @@ namespace task
         {
             Health -= val;
         }
+        public virtual void Cure()
+        {
+            Health = MaxHealth;
+        }
 
         public void GetItem(out Item[] owned)
         {

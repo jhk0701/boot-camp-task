@@ -9,7 +9,7 @@
             // 데이터 로드 구간
             // 없거나 유효하지 않으면 캐릭터 생성
             Character player = CreateCharacter();
-            player.Gold += 10000;
+            player.Gold += 1000;
 
             // 캐릭터 생성 완료
             // 마을로 이동
