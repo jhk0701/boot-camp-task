@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DataDefinition;
 
 namespace task
 {
@@ -12,14 +13,8 @@ namespace task
         {
             Name = name;
 
-            Class = DataDefinition.EClass.Warrior;
-            Level = 1;
-
-            MaxHealth = 100;
-            Health = MaxHealth;
-
-            BaseAttack = 10;
-            BaseDefense = 10;
+            Class = EClass.Warrior;
+            Initialize(Class);
         }
 
         public override void GetDamage(int val)

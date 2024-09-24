@@ -7,7 +7,7 @@ using DataDefinition;
 
 namespace task
 {
-    class Character
+    public class Character
     {
         public string Name { get; protected set; }
 
@@ -55,7 +55,7 @@ namespace task
         /// <summary>
         /// 총합 공격력
         /// </summary>
-        public float Attack 
+        public float Attack
         {
             get { return BaseAttack + EquipAttack; }
         }
@@ -71,8 +71,8 @@ namespace task
         /// <summary>
         /// 총합 방어력
         /// </summary>
-        public float Defense 
-        { 
+        public float Defense
+        {
             get { return BaseDefense + EquipDefense; }
         }
 
@@ -114,23 +114,40 @@ namespace task
         /// <summary>
         /// 레벨 변경 시 호출
         /// </summary>
-        Action<int> OnLevelChanged;
+        protected Action<int> OnLevelChanged;
         #endregion
 
 
         #region ### INVENTORY ###
-        
-        protected Item[] _ownedItems = new Item[0];
+
+        public Item[] OwnedItems { get; protected set; }
         // id - isEquipped
-        protected Dictionary<int, bool> _isEquipped = new Dictionary<int, bool>();
+        public Dictionary<int, bool> IsEquipped { get; protected set; }
         // 장비별 1개 제약 type - id 
-        protected Dictionary<EItemType, Item?> _equipment = new Dictionary<EItemType, Item?>();
-        
+        public Dictionary<EItemType, Item?> Equipment { get; protected set; }
+
         #endregion
 
         public Character()
         {
-            OnLevelChanged = (int lv) => 
+            // 초기화
+            OwnedItems = new Item[0];
+            IsEquipped = new Dictionary<int, bool>();
+            Equipment = new Dictionary<EItemType, Item?>();
+        }
+
+        protected void Initialize(EClass eClass)
+        {
+            Level = 1;
+            CharacterInitData initData = DataSet.GetInstance().CharacterInitDatas[(int)Class];
+
+            MaxHealth = initData.maxHealth;
+            Health = MaxHealth;
+
+            BaseAttack = initData.attack;
+            BaseDefense = initData.defense;
+
+            OnLevelChanged = (int lv) =>
             {
                 Console.WriteLine($"레벨이 올랐습니다!\n현재 레벨 : {lv}\n");
                 Console.WriteLine($"기본 공격력과 방어력이 소폭 상승했습니다.\n");
@@ -138,7 +155,6 @@ namespace task
                 BaseDefense += 1f;
             };
         }
-
 
         public virtual void GetDamage(int val)
         {
@@ -149,29 +165,19 @@ namespace task
             Health = MaxHealth;
         }
 
-        public void GetItem(out Item[] owned)
-        {
-            owned = _ownedItems;
-        }
-        public void GetItem(out Item[] owned, out Dictionary<int, bool> equipped)
-        {
-            owned = _ownedItems;
-            equipped = _isEquipped;
-        }
-
         /// <summary>
         /// 인벤토리에 아이템 추가
         /// </summary>
         /// <param name="item"></param>
         public void AddItem(Item item)
         {
-            Item[] temp = new Item[_ownedItems.Length + 1];
-            for (int i = 0; i < _ownedItems.Length; i++)
-                temp[i] = _ownedItems[i];
+            Item[] temp = new Item[OwnedItems.Length + 1];
+            for (int i = 0; i < OwnedItems.Length; i++)
+                temp[i] = OwnedItems[i];
 
-            temp[_ownedItems.Length] = item;
+            temp[OwnedItems.Length] = item;
 
-            _ownedItems = temp;
+            OwnedItems = temp;
         }
 
         /// <summary>
@@ -181,23 +187,23 @@ namespace task
         /// <param name="item"></param>
         public void RemoveItem(Item item)
         {
-            Item[] temp = new Item[_ownedItems.Length - 1];
+            Item[] temp = new Item[OwnedItems.Length - 1];
             int offset = 0;
-            for (int i = 0; i < _ownedItems.Length; i++)
+            for (int i = 0; i < OwnedItems.Length; i++)
             {
-                if(item.Equals(_ownedItems[i]))
+                if (item.Equals(OwnedItems[i]))
                 {
                     offset++;
                     continue;
                 }
 
-                temp[i - offset] = _ownedItems[i];
+                temp[i - offset] = OwnedItems[i];
             }
 
-            _ownedItems = temp;
+            OwnedItems = temp;
 
             // 제거하려는 아이템이 이미 장착 중인 경우
-            if (_isEquipped.ContainsKey(item.id) && _isEquipped[item.id])
+            if (IsEquipped.ContainsKey(item.id) && IsEquipped[item.id])
                 EquipItem(item); // 재선택을 이용한 해제
         }
 
@@ -209,36 +215,36 @@ namespace task
         public void EquipItem(Item item)
         {
             // 장착 개선
-            if (_equipment.ContainsKey(item.type))
+            if (Equipment.ContainsKey(item.type))
             {
                 // 교체
                 // 기존 장비 해제
-                if(_equipment[item.type] != null)
+                if (Equipment[item.type] != null)
                 {
-                    Item prev = (Item)_equipment[item.type];
-                    _isEquipped[prev.id] = false;
+                    Item prev = (Item)Equipment[item.type];
+                    IsEquipped[prev.id] = false;
                     AdjustEquip(prev.type, prev.value, false);
 
                     // 선택한 장비가 이미 장착한 장비일 경우
                     // 해제까지만 진행
                     if (prev.Equals(item))
                     {
-                        _equipment[item.type] = null;
+                        Equipment[item.type] = null;
                         return;
                     }
                 }
 
                 // 새 장비 반영
-                _equipment[item.type] = item;
-                _isEquipped[item.id] = true;
+                Equipment[item.type] = item;
+                IsEquipped[item.id] = true;
                 AdjustEquip(item.type, item.value, true);
             }
-            else 
-            { 
+            else
+            {
                 // 단순 추가
-                _equipment.Add(item.type, item);
+                Equipment.Add(item.type, item);
                 // 반영
-                _isEquipped[item.id] = true;
+                IsEquipped[item.id] = true;
                 AdjustEquip(item.type, item.value, true);
             }
 

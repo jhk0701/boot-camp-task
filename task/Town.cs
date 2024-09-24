@@ -30,11 +30,14 @@ namespace task
         void ArriveScene()
         {
             Console.Clear();
-            Console.WriteLine("{0} 마을에 오신 여러분 환영합니다.", Name);
-            Console.WriteLine("이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.");
+            Utility.ShowScript(
+                $"{Name} 마을에 오신 여러분 환영합니다.\n",
+                "이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다."
+            );
 
             Act();
         }
+
         public void ArriveScene(Character player)
         {
             Player = player;
@@ -77,37 +80,19 @@ namespace task
         void ShowStatus()
         {
             Console.Clear();
-            StringBuilder sb = new StringBuilder();
+            Utility.ShowScript("상태 보기\n캐릭터의 정보가 표시됩니다.\n");
 
-            sb.Append("상태 보기\n캐릭터의 정보가 표시됩니다.\n");
-            Console.WriteLine(sb.ToString());
+            string className = DataSet.GetInstance().CharacterInitDatas[(int)Player.Class].name;
 
-            string className = "";
-            switch (Player.Class)
-            {
-                case EClass.Warrior:
-                    className = "전사";
-                    break;
-                case EClass.Thief:
-                    className = "도적";
-                    break;
-                case EClass.Archer:
-                    className = "궁수";
-                    break;
-                default:
-                    className = "무직";
-                    break;
-            }
+            Utility.ShowScript(
+                $"Lv. {string.Format("{0:0#}", Player.Level)} ({Player.Exp / (float)Player.Level * 100f }%)\n",
+                $"{Player.Name} ( {className} )\n",
+                $"공격력 : {Player.BaseAttack} {(Player.EquipAttack > 0 ? $"(+{Player.EquipAttack})" : "")}\n",
+                $"방어력 : {Player.BaseDefense} {(Player.EquipDefense > 0 ? $"(+{Player.EquipDefense})" : "")}\n",
+                $"체력 : {Player.Health} / {Player.MaxHealth}\n",
+                $"Gold : {Player.Gold} G\n"
+            );
 
-            sb.Clear();
-            sb.Append($"Lv. {string.Format("{0:0#}", Player.Level)}\n");
-            sb.Append($"{Player.Name} ( {className} )\n");
-            sb.Append($"공격력 : {Player.BaseAttack} {(Player.EquipAttack > 0 ? $"(+{Player.EquipAttack})" : "")}\n");
-            sb.Append($"방어력 : {Player.BaseDefense} {(Player.EquipDefense > 0 ? $"(+{Player.EquipDefense})" : "")}\n");
-            sb.Append($"체력 : {Player.Health} / {Player.MaxHealth}\n");
-            sb.Append($"Gold : {Player.Gold} G\n");
-
-            Console.WriteLine(sb.ToString());
 
             Console.WriteLine("0. 나가기\n");
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 0);
@@ -143,9 +128,8 @@ namespace task
             SetInventoryInfo(1);
 
             // 목록 표기
-            Item[] owned;
-            Dictionary<int, bool> equipped;
-            Player.GetItem(out owned, out equipped);
+            Item[] owned = Player.OwnedItems;
+            Dictionary<int, bool> equipped = Player.IsEquipped;
 
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, owned.Length);
             if (act == 0) // 나가기
@@ -157,6 +141,7 @@ namespace task
             // 장착 관리
             act--;
             Player.EquipItem(owned[act]);
+            DataSet.GetInstance().Save(Player);
 
             EquipItem();
         }
@@ -166,32 +151,29 @@ namespace task
         /// </summary>
         void SetInventoryInfo(int opt = 0)
         {
-            StringBuilder sb = new StringBuilder();
-            sb.Append($"인벤토리{(opt == 0 ? "" : "-장착 관리")}");
-            sb.Append("\n보유 중인 아이템을 관리할 수 있습니다.\n\n");
-            sb.Append("[아이템 목록]\n");
-            // 목록 표기
-            Item[] ownned;
-            Dictionary<int, bool> equipped;
-            Player.GetItem(out ownned, out equipped);
+            Utility.ShowScript(
+                $"인벤토리{(opt == 0 ? "" : "-장착 관리")}\n",
+                "보유 중인 아이템을 관리할 수 있습니다.\n\n",
+                
+                "[아이템 목록]\n"
+            );
 
-            for (int i = 0; i < ownned.Length; i++)
+            // 목록 표기
+            Item[] owned = Player.OwnedItems;
+            Dictionary<int, bool> equipped = Player.IsEquipped;
+
+            for (int i = 0; i < owned.Length; i++)
             {
-                bool isEquipped = equipped.ContainsKey(ownned[i].id) && equipped[ownned[i].id];
-                if (opt == 0)
-                    sb.Append($"- {(isEquipped ? "[E]" : "")}{ownned[i].GetDesc()}\n");
-                else
-                    sb.Append($"- {i + 1} {(isEquipped ? "[E]" : "")}{ownned[i].GetDesc()}\n");
+                bool isEquipped = equipped.ContainsKey(owned[i].id) && equipped[owned[i].id];
+                Utility.ShowScript($"- {(opt == 0 ? "" : i + 1)} {(isEquipped ? "[E]" : "")}{owned[i].GetDesc()}\n\n");
             }
 
-            if (opt == 0)
-                sb.Append("\n1. 장착 관리\n0. 나가기\n");
-            else
-                sb.Append("\n0. 나가기\n");
-
-            Console.WriteLine(sb.ToString());
+            Utility.ShowScript(
+                opt == 0 ?
+                "1. 장착 관리\n0. 나가기\n" :
+                "0. 나가기\n"
+            );
         }
-
 
         #endregion
 
@@ -215,15 +197,14 @@ namespace task
                 case 0: // 나가기
                     ArriveScene();
                     break;
-
                 case 1: // 구매
                     Console.Clear();
                     SetStoreInfo(ref items, act);
+
                     BuyItem(ref items);
                     break;
-
                 case 2: // 판매
-                    Player.GetItem(out items);
+                    items = Player.OwnedItems;
 
                     Console.Clear();
                     SetStoreInfo(ref items, act);
@@ -254,7 +235,7 @@ namespace task
             }
 
             if (items[act].price > Player.Gold) // 골드 부족
-                Console.WriteLine("Gold가 부족합니다.");
+                Utility.ShowScript("Gold가 부족합니다.");
             else // 구매 성사
             {
                 Player.Gold -= items[act].price;
@@ -267,7 +248,8 @@ namespace task
                 Console.Clear();
                 SetStoreInfo(ref items, 1);
 
-                Console.WriteLine("구매를 완료했습니다.");
+                Utility.ShowScript("구매를 완료했습니다.");
+                DataSet.GetInstance().Save(Player, isSoldOut);
             }
 
             // 구매 계속 진행
@@ -279,8 +261,7 @@ namespace task
         /// </summary>
         void SellItem()
         {
-            Item[] owned;
-            Player.GetItem(out owned);
+            Item[] owned = Player.OwnedItems;
 
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, owned.Length);
 
@@ -300,11 +281,13 @@ namespace task
             Player.RemoveItem(owned[act]);
 
             // 판매 후 정보 업데이트
-            Player.GetItem(out owned);
+            owned = Player.OwnedItems;
 
             Console.Clear();
             SetStoreInfo(ref owned, 2);
-            Console.WriteLine("판매가 완료했습니다.");
+
+            Utility.ShowScript("판매가 완료했습니다.");
+            DataSet.GetInstance().Save(Player, isSoldOut);
 
             SellItem();
         }
@@ -315,30 +298,35 @@ namespace task
         /// <param name="opt"></param>
         void SetStoreInfo(ref Item[] items, int opt = 0)
         {
-            StringBuilder sb = new StringBuilder();
-            sb.Append($"상점{(opt > 0 ? (opt == 1 ? "-아이템 구매" : "-아이템 판매") : "")}");
-            sb.Append("\n필요한 아이템을 얻을 수 있는 상점입니다.\n\n");
+            Utility.ShowScript(
+                $"상점{(opt > 0 ? (opt == 1 ? "-아이템 구매" : "-아이템 판매") : "")}\n",
+                "필요한 아이템을 얻을 수 있는 상점입니다.\n\n",
 
-            sb.Append($"[보유 골드]\n{Player.Gold} G\n\n");
-            sb.Append("[아이템 목록]\n");
+                $"[보유 골드]\n{Player.Gold} G\n\n",
+
+                "[아이템 목록]"
+            );
+
+            StringBuilder sb = new StringBuilder();
             // 목록 표기
             for (int i = 0; i < items.Length; i++)
             {
-                sb.Append($"- {(opt == 0 ? "" : i + 1)} {items[i].GetDesc()}");
+                Utility.AppendString(ref sb,
+                    $"- {(opt == 0 ? "" : i + 1)} {items[i].GetDesc()}",
 
-                if (opt == 2)
-                    sb.Append($"| {items[i].price * 0.85, -10} G\n");
-                else
-                    sb.Append($"| {(isSoldOut[items[i].id] ? "구매완료" : items[i].price + " G"), -10}\n");
+                    opt == 2 ? 
+                    $"| {items[i].price * 0.85,-10} G\n" :
+                    $"| {(isSoldOut[items[i].id] ? "구매완료" : items[i].price + " G"),-10}\n"
+                );
             }
-                
-
-            if (opt == 0)
-                sb.Append("\n1. 아이템 구매\n2. 아이템 판매\n0. 나가기\n");
-            else
-                sb.Append("\n0. 나가기\n");
-
             Console.WriteLine(sb.ToString());
+
+            Utility.ShowScript(
+                "\n",
+                opt == 0 ?
+                "1. 아이템 구매\n2. 아이템 판매\n0. 나가기\n" :
+                "0. 나가기\n"
+            );
         }
 
 
@@ -352,14 +340,18 @@ namespace task
             Dungeon[] dungeons = DataSet.GetInstance().Dungeons;
 
             Console.Clear();
+            Utility.ShowScript(
+                "던전입장\n",
+                "이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.\n"
+            );
 
             StringBuilder sb = new StringBuilder();
-            sb.Append("던전입장\n이곳에서 던전으로 들어가기전 활동을 할 수 있습니다.\n\n");
             for (int i = 0; i < dungeons.Length; i++)
                 sb.Append($"{i + 1}. {dungeons[i].name}\t| 방어력 {dungeons[i].recommendedDefense} 이상 권장\n");
 
             sb.Append("0. 나가기\n");
             Console.WriteLine(sb.ToString());
+
 
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, dungeons.Length);
 
@@ -386,50 +378,57 @@ namespace task
             }
 
             Console.Clear();
-            StringBuilder sb = new StringBuilder();
 
             if (isClear)
             {
                 // 권장 방어력 이상 던전 클리어
-                sb.Append($"던전 클리어\n축하합니다!!\n{dungeon.name}을 클리어 하였습니다.\n\n");
-                sb.Append("[탐험 결과]\n");
 
                 // 권장 방어력에 따라 종료 시 체력 소모
                 // 기본 체력 감소 : 20 ~ 35 중 랜덤
                 // 추가 감소량 : 내 방어력 - 권장 방어력
                 // 체력 소모 -= 기본 체력 감소 - 추가 감소량
                 float damage = r.Next(20, 36) - (Player.Defense - dungeon.recommendedDefense);
-                sb.Append($"체력 {Player.Health} -> {(Player.Health - damage > 0 ? Player.Health - damage : 0)}\n");
-
-                Player.GetDamage((int)damage);
 
                 // 보상
-                // 기본 골드 보상
-                // + 공격력의 10 ~ 20% 만큼의 추가 보상
+                // 기본 골드 보상 + 공격력의 10 ~ 20% 만큼의 추가 보상
                 float additivePer = r.Next((int)Player.Attack, (int)Player.Attack * 2 + 1) * 0.01f;
                 int reward = (int)(dungeon.rewardGold * (1 + additivePer));
-                sb.Append($"Gold {Player.Gold} G -> {Player.Gold + reward} G\n");
 
+                Utility.ShowScript(
+                    $"던전 클리어\n축하합니다!!\n{dungeon.name}을 클리어 하였습니다.\n\n",
+
+                    "[탐험 결과]\n",
+                    $"체력 {Player.Health} -> {(Player.Health - damage > 0 ? Player.Health - damage : 0)}\n",
+                    $"Gold {Player.Gold} G -> {Player.Gold + reward} G\n"
+                );
+
+                Player.GetDamage((int)damage);
                 Player.Gold += reward;
 
                 // 클리어 시, 경험치 쌓기
                 Player.Exp++;
-                //sb.Append($"\n현재 레벨 : {Player.Level},  {Player.Exp} / {Player.Level}\n");
             }
             else
             {
-                sb.Append($"던전 실패\n{dungeon.name}을 실패했습니다.\n\n");
-                sb.Append("[실패 페널티]\n");
                 // 실패 페널티 : 체력 절반 감소 (현재 체력 기준)
                 int damage = (int)(Player.Health * 0.5f);
-                sb.Append($"체력 {Player.Health} -> {Player.Health - damage}\n");
+
+                Utility.ShowScript(
+                    $"던전 실패\n{dungeon.name}을 실패했습니다.\n\n",
+
+                    "[실패 페널티]\n",
+                    $"체력 {Player.Health} -> {Player.Health - damage}\n"
+                );
+
                 Player.GetDamage(damage);
             }
 
-            sb.Append("\n0. 나가기\n");
-            Console.WriteLine(sb.ToString());
+            DataSet.GetInstance().Save(Player);
+
+            Utility.ShowScript("0. 나가기\n");
 
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 0);
+
             ArriveScene();
         }
 
@@ -450,13 +449,12 @@ namespace task
 
         void SetRest()
         {
-            StringBuilder sb = new StringBuilder();
+            Utility.ShowScript(
+                "휴식하기\n",
+                $"{_restCost} G를 내면 체력을 회복할 수 있습니다. (보유 골드 : {Player.Gold} G)\n\n",
 
-            sb.Append("휴식하기\n");
-            sb.Append($"{_restCost} G를 내면 체력을 회복할 수 있습니다. (보유 골드 : {Player.Gold} G)\n\n");
-            sb.Append("1. 휴식하기\n0. 나가기\n");
-
-            Console.WriteLine(sb.ToString());
+                "1. 휴식하기\n0. 나가기\n"
+            );
         }
 
         void Rest()
@@ -477,12 +475,12 @@ namespace task
                 Console.Clear();
                 SetRest();
 
-                Console.WriteLine("휴식을 완료했습니다.");
+                Utility.ShowScript("휴식을 완료했습니다.");
                 Rest();
             }
             else
             {
-                Console.WriteLine("Gold 가 부족합니다.");
+                Utility.ShowScript("Gold 가 부족합니다.");
                 Rest();
             }
         }

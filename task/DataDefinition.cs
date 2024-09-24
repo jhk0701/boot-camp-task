@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
+using task;
 
 namespace DataDefinition
 {
@@ -12,8 +12,7 @@ namespace DataDefinition
     /// </summary>
     public enum EClass : int
     {
-        None = 0,
-        Warrior,
+        Warrior = 0,
         Thief,
         Archer
     }
@@ -78,13 +77,54 @@ namespace DataDefinition
         }
     }
 
+    public struct CharacterInitData
+    {
+        public string name;
+        public float attack;
+        public float defense;
+        public int maxHealth;
+
+        public CharacterInitData(string n, float atk, float def, int maxHp)
+        {
+            name = n;
+            attack = atk;
+            defense = def;
+            maxHealth = maxHp;
+        }
+    }
+
+    public class GameData
+    {
+        // 플레이어 정보
+        public Character Player { get; set; }
+
+        /* 상점 정보가... 굳이 필요한가?
+
+         없는 경우 : 
+         게임 상, 아이템은 오로지 1개이며
+         상점 열 때마다 서로 비교해줘야 함
+
+         있는 경우 :
+         게임 상, 아이템은 1개 이상이 될 수 있으며
+         상점 열 때마다 별도로 비교할 필요 없음
+
+         결론 :
+         확장 및 편의성을 고려했을 때 넣는게 좋을 듯
+         */
+        public Dictionary<int, bool> ItemSellingInfo { get; set; } // id (int) - is sold out (bool)
+    }
+
     class DataSet
     {
         static DataSet _instance;
 
         public Item[] Items { get; private set; }
         public Dungeon[] Dungeons { get; private set; }
-        
+        public CharacterInitData[] CharacterInitDatas { get; private set; }
+
+        GameData _gameData;
+
+        const string FILE_PATH = "./game.dat";
 
         private DataSet() 
         {
@@ -105,6 +145,14 @@ namespace DataDefinition
                 new Dungeon("일반 던전", 11, 1700),
                 new Dungeon("어려운 던전", 17, 2500)
             ];
+
+            CharacterInitDatas = [
+                new CharacterInitData("전사", 10f, 10f, 100),
+                new CharacterInitData("도적", 15f, 7f, 80),
+            ];
+
+            _gameData = new GameData();
+            _gameData.Player = new Character();
         }
 
         // 싱글톤 적용
@@ -115,5 +163,87 @@ namespace DataDefinition
             return _instance;
         }
 
+        public void Save()
+        {
+            JsonSerializerOptions opt = new JsonSerializerOptions();
+            opt.IncludeFields = true; // 내부 필드 포함
+            opt.WriteIndented = true; // 띄어쓰기
+
+            string data = JsonSerializer.Serialize(_gameData, opt);
+            File.WriteAllText(FILE_PATH, data);
+
+            // 문제 1
+            // 데이터가 공백으로 출력
+            // https://stackoverflow.com/questions/58784499/system-text-json-jsonserializer-serialize-returns-empty-json-object
+            // https://stackoverflow.com/questions/58139759/how-to-use-class-fields-with-system-text-json-jsonserializer
+            // 해결
+            // In .NET Core 3.x 버전에선 클래스 필드를 직열화할 수 없었음.
+            // In .NET 5 버전 이후부터 옵션을 추가해서 내부 필드를 직열화할 수 있게 됨.
+        }
+        public void Save(Character player) 
+        { 
+            _gameData.Player = player;
+            Save();
+        }
+        public void Save(Character player, Dictionary<int, bool> isSold)
+        {
+            _gameData.Player = player;
+            _gameData.ItemSellingInfo = isSold;
+            Save();
+        }
+
+        public bool Load()
+        {
+            if (File.Exists(FILE_PATH))
+            {
+                //유효성 체크 필요
+                string text = File.ReadAllText(FILE_PATH);
+                return IsVaild(text, out _gameData);
+            }
+            else
+                return false;
+        }
+        public Character LoadCharater()
+        {
+            return _gameData.Player;
+        }
+
+        bool IsVaild(string text, out GameData data)
+        {
+            JsonSerializerOptions opt = new JsonSerializerOptions();
+            opt.PropertyNameCaseInsensitive = true;
+
+            data = JsonSerializer.Deserialize<GameData>(text, opt);
+            // 문제 2
+            // class deserialize 시 null
+            // 1. 접근성
+            // 2. 모델 프로퍼티화
+
+            if (data.Player == null)
+                return false;
+
+            CharacterInitData initData = CharacterInitDatas[(int)data.Player.Class];
+            // 민감한 사항
+            // 공격력, 방어력, 체력 관련 수치 조작
+            float expectedAttack = data.Player.Level * 0.5f + initData.attack;
+            float expectedDefense = data.Player.Level * 1f + initData.defense;
+            if (data.Player.BaseAttack > expectedAttack ||
+                data.Player.BaseDefense > expectedDefense || 
+                data.Player.MaxHealth != initData.maxHealth)
+                return false;
+
+            // 더 높은 수준의 유효성 검사가 필요함.
+
+            return true;
+        }
+
+        void DebugDeserialize(GameData data)
+        {
+            Console.WriteLine($"Player name : {data.Player.Name}");
+            Console.WriteLine($"Player BaseAttack : {data.Player.BaseAttack}");
+            Console.WriteLine($"Player EquipAttack : {data.Player.EquipAttack}");
+            Console.WriteLine($"Player  : {data.Player.EquipAttack}");
+            Console.WriteLine($"ItemSellingInfo : {data.ItemSellingInfo.Count}");
+        }
     }
 }
