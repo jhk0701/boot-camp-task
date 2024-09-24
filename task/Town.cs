@@ -13,14 +13,17 @@ namespace task
         public Character Player { get; set; }
 
         // 상점 내 item 관련
-        bool[] isSoldOut;
+        // id - is sold out;
+        Dictionary<int, bool> isSoldOut = new Dictionary<int, bool>();
 
         public Town(string name)
         {
             Name = name;
             // 데이터 읽기
             // 없으면 false 초기화
-            isSoldOut = new bool[DataSet.GetInstance().Items.Length];
+            Item[] items = DataSet.GetInstance().Items;
+            for (int i = 0; i < items.Length; i++)
+                isSoldOut.Add(items[i].id, false);
         }
 
         void ArriveScene()
@@ -62,6 +65,8 @@ namespace task
         }
 
 
+        #region ### 상태 보기 ###
+
         void ShowStatus()
         {
             Console.Clear();
@@ -86,7 +91,7 @@ namespace task
                     className = "무직";
                     break;
             }
-            
+
             sb.Clear();
             sb.Append($"Lv. {string.Format("{0:0#}", Player.Level)}\n");
             sb.Append($"{Player.Name} ( {className} )\n");
@@ -103,13 +108,17 @@ namespace task
             ArriveScene();
         }
 
-        
+        #endregion
+
+
+        #region ### 인벤토리 ###
+
         void ShowInventory()
         {
             Console.Clear();
             SetInventoryInfo();
 
-            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 1, 2);
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 1);
 
             if (act == 0) // 나가기
             {
@@ -127,11 +136,11 @@ namespace task
             SetInventoryInfo(1);
 
             // 목록 표기
-            Item[] ownned;
+            Item[] owned;
             Dictionary<int, bool> equipped;
-            Player.GetItem(out ownned, out equipped);
+            Player.GetItem(out owned, out equipped);
 
-            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, ownned.Length);
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, owned.Length);
             if (act == 0) // 나가기
             {
                 ArriveScene();
@@ -140,7 +149,7 @@ namespace task
 
             // 장착 관리
             act--;
-            Player.EquipItem(ownned[act]);
+            Player.EquipItem(owned[act]);
 
             EquipItem();
         }
@@ -155,20 +164,20 @@ namespace task
             sb.Append("\n보유 중인 아이템을 관리할 수 있습니다.\n\n");
             sb.Append("[아이템 목록]\n");
             // 목록 표기
-            Item[] ownned; 
+            Item[] ownned;
             Dictionary<int, bool> equipped;
             Player.GetItem(out ownned, out equipped);
 
-            for (int i = 0; i < ownned.Length; i++) 
+            for (int i = 0; i < ownned.Length; i++)
             {
                 bool isEquipped = equipped.ContainsKey(ownned[i].id) && equipped[ownned[i].id];
-                if(opt == 0)
+                if (opt == 0)
                     sb.Append($"- {(isEquipped ? "[E]" : "")}{ownned[i].GetDesc()}\n");
                 else
                     sb.Append($"- {i + 1} {(isEquipped ? "[E]" : "")}{ownned[i].GetDesc()}\n");
             }
 
-            if(opt == 0)
+            if (opt == 0)
                 sb.Append("\n1. 장착 관리\n0. 나가기\n");
             else
                 sb.Append("\n0. 나가기\n");
@@ -177,92 +186,153 @@ namespace task
         }
 
 
+        #endregion
+
+
+        #region ### 상점 ###
+
         /// <summary>
         /// 상점 선택
         /// </summary>
         void ShowStore()
         {
-            Console.Clear();
-            SetStoreInfo();
+            Item[] items = DataSet.GetInstance().Items;
 
-            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 1);
+            Console.Clear();
+            SetStoreInfo(ref items);
+
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 2);
+
+            switch (act)
+            {
+                case 0: // 나가기
+                    ArriveScene();
+                    break;
+
+                case 1: // 구매
+                    Console.Clear();
+                    SetStoreInfo(ref items, act);
+                    BuyItem(ref items);
+                    break;
+
+                case 2: // 판매
+                    Player.GetItem(out items);
+
+                    Console.Clear();
+                    SetStoreInfo(ref items, act);
+                    SellItem();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 아이템 구매
+        /// </summary>
+        void BuyItem(ref Item[] items)
+        {
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, items.Length);
+
             if (act == 0) // 나가기
             {
                 ArriveScene();
                 return;
             }
 
-            // 구매 선택
-            Console.Clear();
-            SetStoreInfo(1);
-
-            BuyItem();
-        }
-        
-        /// <summary>
-        /// 아이템 구매
-        /// </summary>
-        void BuyItem()
-        {
-            Item[] items = DataSet.GetInstance().Items;
-            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, items.Length);
-
-            if(act == 0) // 나가기
+            act--;
+            if (isSoldOut[items[act].id])
             {
-                ArriveScene();
+                Console.WriteLine("이미 구매한 아이템입니다.");
+                BuyItem(ref items);
                 return;
             }
-
-            act--;
-            if (isSoldOut[act])
-                Console.WriteLine("이미 구매한 아이템입니다.");
 
             if (items[act].price > Player.Gold) // 골드 부족
                 Console.WriteLine("Gold가 부족합니다.");
             else // 구매 성사
             {
                 Player.Gold -= items[act].price;
-                isSoldOut[act] = true;
+                isSoldOut[items[act].id] = true;
 
                 // 인벤토리에 추가
                 Player.AddItem(items[act]);
 
                 // 구매 후 정보 업데이트
                 Console.Clear();
-                SetStoreInfo(1);
+                SetStoreInfo(ref items, 1);
 
                 Console.WriteLine("구매를 완료했습니다.");
             }
 
             // 구매 계속 진행
-            BuyItem();
+            BuyItem(ref items);
+        }
+
+        void SellItem()
+        {
+            Item[] owned;
+            Player.GetItem(out owned);
+
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, owned.Length);
+
+            if (act == 0) // 나가기
+            {
+                ArriveScene();
+                return;
+            }
+
+            act--;
+            // 판매 성사
+            isSoldOut[owned[act].id] = false;
+            Player.Gold += (int)(owned[act].price * 0.85f);
+
+            // 인벤토리 제거
+            // 장착 가능성 확인 및 처리
+            Player.RemoveItem(owned[act]);
+
+            // 판매 후 정보 업데이트
+            Player.GetItem(out owned);
+
+            Console.Clear();
+            SetStoreInfo(ref owned, 2);
+            Console.WriteLine("판매가 완료했습니다.");
+
+            SellItem();
         }
 
         /// <summary>
         /// 상점 정보 표시, 표시 옵션 0 : 일반, 1 : 구매, 2 : 판매
         /// </summary>
         /// <param name="opt"></param>
-        void SetStoreInfo(int opt = 0)
+        void SetStoreInfo(ref Item[] items, int opt = 0)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append($"상점{(opt > 0 ? (opt == 1 ? "-아이템 구매" : "아이템 판매") : "")}");
+            sb.Append($"상점{(opt > 0 ? (opt == 1 ? "-아이템 구매" : "-아이템 판매") : "")}");
             sb.Append("\n필요한 아이템을 얻을 수 있는 상점입니다.\n\n");
             sb.Append($"[보유 골드]\n{Player.Gold} G\n\n");
             sb.Append("[아이템 목록\n");
             // 목록 표기
-            Item[] items = DataSet.GetInstance().Items;
             for (int i = 0; i < items.Length; i++)
                 if (opt == 1)
-                    sb.Append($"- {i + 1} {items[i].GetDesc(isSoldOut[i])}\n");
+                    sb.Append($"- {i + 1} {items[i].GetDesc(isSoldOut[items[i].id])}\n");
+                else if (opt == 2)
+                {
+                    sb.Append($"- {i + 1} {items[i].GetDesc()}");
+                    sb.Append($"| {items[i].price * 0.85} G");
+                }
                 else
-                    sb.Append($"- {items[i].GetDesc(isSoldOut[i])}\n");
+                    sb.Append($"- {items[i].GetDesc(isSoldOut[items[i].id])}\n");
 
-            if (opt == 1)
-                sb.Append("\n0. 나가기\n");
+            if (opt == 0)
+                sb.Append("\n1. 아이템 구매\n2. 아이템 판매\n0. 나가기\n");
             else
-                sb.Append("\n1. 아이템 구매\n0. 나가기\n");
+                sb.Append("\n0. 나가기\n");
 
             Console.WriteLine(sb.ToString());
         }
+
+
+        #endregion
+
+
     }
 }

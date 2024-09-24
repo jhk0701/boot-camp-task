@@ -102,11 +102,11 @@ namespace task
 
         #region ### INVENTORY ###
         
-        protected Item[] _ownnedItems = new Item[0];
+        protected Item[] _ownedItems = new Item[0];
         // id - isEquipped
         protected Dictionary<int, bool> _isEquipped = new Dictionary<int, bool>();
-        // type - id
-        //protected Dictionary<EItemType, int> _equippedItems; // 장비별 1개 제약
+        // 장비별 1개 제약 type - id 
+        protected Dictionary<EItemType, Item?> _equipment = new Dictionary<EItemType, Item?>();
         
         #endregion
 
@@ -115,59 +115,105 @@ namespace task
         {
             Health -= val;
         }
-        
+
+        public void GetItem(out Item[] owned)
+        {
+            owned = _ownedItems;
+        }
         public void GetItem(out Item[] owned, out Dictionary<int, bool> equipped)
         {
-            owned = _ownnedItems;
+            owned = _ownedItems;
             equipped = _isEquipped;
         }
 
         public void AddItem(Item item)
         {
-            Item[] temp = new Item[_ownnedItems.Length + 1];
-            for (int i = 0; i < _ownnedItems.Length; i++)
-                temp[i] = _ownnedItems[i];
+            Item[] temp = new Item[_ownedItems.Length + 1];
+            for (int i = 0; i < _ownedItems.Length; i++)
+                temp[i] = _ownedItems[i];
 
-            temp[_ownnedItems.Length] = item;
+            temp[_ownedItems.Length] = item;
 
-            _ownnedItems = temp;
+            _ownedItems = temp;
         }
 
         public void RemoveItem(Item item)
         {
-            Item[] temp = new Item[_ownnedItems.Length - 1];
+            Item[] temp = new Item[_ownedItems.Length - 1];
             int offset = 0;
-            for (int i = 0; i < _ownnedItems.Length; i++)
+            for (int i = 0; i < _ownedItems.Length; i++)
             {
-                if(item.Equals(_ownnedItems[i]))
+                if(item.Equals(_ownedItems[i]))
                 {
                     offset++;
                     continue;
                 }
 
-                temp[i - offset] = _ownnedItems[i];
+                temp[i - offset] = _ownedItems[i];
             }
 
-            _ownnedItems = temp;
+            _ownedItems = temp;
+
+            // 제거하려는 아이템이 이미 장착 중인 경우
+            if (_isEquipped.ContainsKey(item.id) && _isEquipped[item.id])
+                EquipItem(item); // 재선택을 이용한 해제
         }
 
-        public void EquipItem(Item item) 
+        public void EquipItem(Item item)
         {
-            if (_isEquipped.ContainsKey(item.id))
-                _isEquipped[item.id] = !_isEquipped[item.id];
-            else
-                _isEquipped[item.id] = true;
-
-            switch (item.type)
+            // 장착 개선
+            if (_equipment.ContainsKey(item.type))
             {
-                case EItemType.Weapon:
-                    EquipAttack += _isEquipped[item.id] ? item.value : -item.value;
-                    break;
-                case EItemType.Armor:
-                    EquipDefense += _isEquipped[item.id] ? item.value : -item.value;
-                    break;
+                // 교체
+                // 기존 장비 해제
+                if(_equipment[item.type] != null)
+                {
+                    Item prev = (Item)_equipment[item.type];
+                    _isEquipped[prev.id] = false;
+                    AdjustEquip(prev.type, prev.value, false);
+
+                    // 선택한 장비가 이미 장착한 장비일 경우
+                    // 해제까지만 진행
+                    if (prev.Equals(item))
+                    {
+                        _equipment[item.type] = null;
+                        return;
+                    }
+                }
+
+                // 새 장비 반영
+                _equipment[item.type] = item;
+                _isEquipped[item.id] = true;
+                AdjustEquip(item.type, item.value, true);
+            }
+            else 
+            { 
+                // 단순 추가
+                _equipment.Add(item.type, item);
+                // 반영
+                _isEquipped[item.id] = true;
+                AdjustEquip(item.type, item.value, true);
             }
 
+            //if (_isEquipped.ContainsKey(item.id))
+            //    _isEquipped[item.id] = !_isEquipped[item.id];
+            //else
+            //    _isEquipped[item.id] = true;
+
+            //AdjustEquip(item.type, item.value, _isEquipped[item.id]);
+        }
+
+        void AdjustEquip(EItemType t, int val, bool isEquip)
+        {
+            switch (t)
+            {
+                case EItemType.Weapon:
+                    EquipAttack += isEquip ? val : -val;
+                    break;
+                case EItemType.Armor:
+                    EquipDefense += isEquip ? val : -val;
+                    break;
+            }
         }
     }
 }
