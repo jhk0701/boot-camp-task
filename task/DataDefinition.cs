@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace DataDefinition
 {
+    /// <summary>
+    /// 플레이어 직업 클래스
+    /// </summary>
     public enum EClass : int
     {
         None = 0,
@@ -13,6 +17,10 @@ namespace DataDefinition
         Thief,
         Archer
     }
+
+    /// <summary>
+    /// 아이템 타입
+    /// </summary>
     public enum EItemType : int
     {
         Normal = 0,
@@ -20,13 +28,16 @@ namespace DataDefinition
         Armor
     }
 
+    /// <summary>
+    /// 아이템 정보
+    /// </summary>
     public struct Item
     {
         public int id;
         public string name;
         public string description;
         public EItemType type;
-        public int value;
+        public float value;
         public int price;
 
         public Item (int i, string n, string desc, EItemType t, int val, int p)
@@ -48,17 +59,11 @@ namespace DataDefinition
 
             return sb.ToString();
         }
-
-        public string GetDesc(bool isSoldOut)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append(GetDesc());
-            sb.Append($"| {(isSoldOut ? "구매완료" : price + " G")}\t");
-
-            return sb.ToString();
-        }
     }
     
+    /// <summary>
+    /// 던전 정보
+    /// </summary>
     public struct Dungeon
     {
         public string name;
@@ -79,6 +84,7 @@ namespace DataDefinition
 
         public Item[] Items { get; private set; }
         public Dungeon[] Dungeons { get; private set; }
+        
 
         private DataSet() 
         {

@@ -15,9 +15,13 @@ namespace task
 
         public int Gold { get; set; }
 
+
         #region ### STATUS ###
 
         int _health;
+        /// <summary>
+        /// 현재 생명력
+        /// </summary>
         public int Health
         {
             get { return _health; }
@@ -35,20 +39,23 @@ namespace task
                 }
             }
         }
+        /// <summary>
+        /// 최대 생명력
+        /// </summary>
         public int MaxHealth { get; protected set; }
 
         /// <summary>
         /// 기본 공격력
         /// </summary>
-        public int BaseAttack { get; protected set; }
+        public float BaseAttack { get; protected set; }
         /// <summary>
         /// 장비 적용 공격력
         /// </summary>
-        public int EquipAttack { get; protected set; }
+        public float EquipAttack { get; protected set; }
         /// <summary>
         /// 총합 공격력
         /// </summary>
-        public int Attack 
+        public float Attack 
         {
             get { return BaseAttack + EquipAttack; }
         }
@@ -56,20 +63,23 @@ namespace task
         /// <summary>
         /// 기본 방어력
         /// </summary>
-        public int BaseDefense { get; protected set; }
+        public float BaseDefense { get; protected set; }
         /// <summary>
         /// 장비 적용 방어력
         /// </summary>
-        public int EquipDefense { get; protected set; }
+        public float EquipDefense { get; protected set; }
         /// <summary>
         /// 총합 방어력
         /// </summary>
-        public int Defense 
+        public float Defense 
         { 
             get { return BaseDefense + EquipDefense; }
         }
 
         int _lv = 1;
+        /// <summary>
+        /// 현재 레벨
+        /// </summary>
         public int Level
         {
             get { return _lv; }
@@ -77,10 +87,14 @@ namespace task
             {
                 if (value <= 0) return;
                 _lv = value;
+                OnLevelChanged?.Invoke(_lv);
             }
         }
 
         int _exp = 0;
+        /// <summary>
+        /// 현재 경험치
+        /// </summary>
         public int Exp
         {
             get { return _exp; }
@@ -91,12 +105,16 @@ namespace task
 
                 if (_exp >= Level)
                 {
-                    Level++;
                     _exp -= Level;
+                    Level++;
                 }
             }
         }
 
+        /// <summary>
+        /// 레벨 변경 시 호출
+        /// </summary>
+        Action<int> OnLevelChanged;
         #endregion
 
 
@@ -109,6 +127,17 @@ namespace task
         protected Dictionary<EItemType, Item?> _equipment = new Dictionary<EItemType, Item?>();
         
         #endregion
+
+        public Character()
+        {
+            OnLevelChanged = (int lv) => 
+            {
+                Console.WriteLine($"레벨이 올랐습니다!\n현재 레벨 : {lv}\n");
+                Console.WriteLine($"기본 공격력과 방어력이 소폭 상승했습니다.\n");
+                BaseAttack += 0.5f;
+                BaseDefense += 1f;
+            };
+        }
 
 
         public virtual void GetDamage(int val)
@@ -130,6 +159,10 @@ namespace task
             equipped = _isEquipped;
         }
 
+        /// <summary>
+        /// 인벤토리에 아이템 추가
+        /// </summary>
+        /// <param name="item"></param>
         public void AddItem(Item item)
         {
             Item[] temp = new Item[_ownedItems.Length + 1];
@@ -141,6 +174,11 @@ namespace task
             _ownedItems = temp;
         }
 
+        /// <summary>
+        /// 인벤토리에서 아이템 제거
+        /// 장착 아이템일 시, 자동 해제
+        /// </summary>
+        /// <param name="item"></param>
         public void RemoveItem(Item item)
         {
             Item[] temp = new Item[_ownedItems.Length - 1];
@@ -163,6 +201,11 @@ namespace task
                 EquipItem(item); // 재선택을 이용한 해제
         }
 
+        /// <summary>
+        /// 아이템 장착
+        /// 장착 개선으로 타입별 1개만 착용 가능
+        /// </summary>
+        /// <param name="item"></param>
         public void EquipItem(Item item)
         {
             // 장착 개선
@@ -199,6 +242,7 @@ namespace task
                 AdjustEquip(item.type, item.value, true);
             }
 
+            // 장착 기능
             //if (_isEquipped.ContainsKey(item.id))
             //    _isEquipped[item.id] = !_isEquipped[item.id];
             //else
@@ -207,7 +251,13 @@ namespace task
             //AdjustEquip(item.type, item.value, _isEquipped[item.id]);
         }
 
-        void AdjustEquip(EItemType t, int val, bool isEquip)
+        /// <summary>
+        /// 장착한 아이템 적용
+        /// </summary>
+        /// <param name="t"></param>
+        /// <param name="val"></param>
+        /// <param name="isEquip"></param>
+        void AdjustEquip(EItemType t, float val, bool isEquip)
         {
             switch (t)
             {

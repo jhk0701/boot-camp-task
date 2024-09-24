@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DataDefinition;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace task
 {
@@ -14,7 +14,7 @@ namespace task
         public Character Player { get; set; }
 
         // 상점 내 item 관련
-        // id - is sold out;
+        // id - is sold out
         Dictionary<int, bool> isSoldOut = new Dictionary<int, bool>();
 
         public Town(string name)
@@ -320,18 +320,18 @@ namespace task
             sb.Append("\n필요한 아이템을 얻을 수 있는 상점입니다.\n\n");
 
             sb.Append($"[보유 골드]\n{Player.Gold} G\n\n");
-            sb.Append("[아이템 목록\n");
+            sb.Append("[아이템 목록]\n");
             // 목록 표기
             for (int i = 0; i < items.Length; i++)
-                if (opt == 1)
-                    sb.Append($"- {i + 1} {items[i].GetDesc(isSoldOut[items[i].id])}\n");
-                else if (opt == 2)
-                {
-                    sb.Append($"- {i + 1} {items[i].GetDesc()}");
-                    sb.Append($"| {items[i].price * 0.85} G");
-                }
+            {
+                sb.Append($"- {(opt == 0 ? "" : i + 1)} {items[i].GetDesc()}");
+
+                if (opt == 2)
+                    sb.Append($"| {items[i].price * 0.85, -10} G\n");
                 else
-                    sb.Append($"- {items[i].GetDesc(isSoldOut[items[i].id])}\n");
+                    sb.Append($"| {(isSoldOut[items[i].id] ? "구매완료" : items[i].price + " G"), -10}\n");
+            }
+                
 
             if (opt == 0)
                 sb.Append("\n1. 아이템 구매\n2. 아이템 판매\n0. 나가기\n");
@@ -398,15 +398,15 @@ namespace task
                 // 기본 체력 감소 : 20 ~ 35 중 랜덤
                 // 추가 감소량 : 내 방어력 - 권장 방어력
                 // 체력 소모 -= 기본 체력 감소 - 추가 감소량
-                int damage = r.Next(20, 36) - (Player.Defense - dungeon.recommendedDefense);
+                float damage = r.Next(20, 36) - (Player.Defense - dungeon.recommendedDefense);
                 sb.Append($"체력 {Player.Health} -> {(Player.Health - damage > 0 ? Player.Health - damage : 0)}\n");
 
-                Player.GetDamage(damage);
+                Player.GetDamage((int)damage);
 
                 // 보상
                 // 기본 골드 보상
                 // + 공격력의 10 ~ 20% 만큼의 추가 보상
-                float additivePer = r.Next(Player.Attack, Player.Attack * 2 + 1) * 0.01f;
+                float additivePer = r.Next((int)Player.Attack, (int)Player.Attack * 2 + 1) * 0.01f;
                 int reward = (int)(dungeon.rewardGold * (1 + additivePer));
                 sb.Append($"Gold {Player.Gold} G -> {Player.Gold + reward} G\n");
 
@@ -414,6 +414,7 @@ namespace task
 
                 // 클리어 시, 경험치 쌓기
                 Player.Exp++;
+                //sb.Append($"\n현재 레벨 : {Player.Level},  {Player.Exp} / {Player.Level}\n");
             }
             else
             {
@@ -437,20 +438,30 @@ namespace task
 
         #region ### 휴식 ###
 
+        int _restCost = 500;
+
         void ShowRest()
         {
-            int cost = 500;
-
             Console.Clear();
+            SetRest();
+
+            Rest();
+        }
+
+        void SetRest()
+        {
             StringBuilder sb = new StringBuilder();
 
             sb.Append("휴식하기\n");
-            sb.Append($"{cost} G를 내면 체력을 회복할 수 있습니다. (보유 골드 : {Player.Gold} G)\n\n");
+            sb.Append($"{_restCost} G를 내면 체력을 회복할 수 있습니다. (보유 골드 : {Player.Gold} G)\n\n");
             sb.Append("1. 휴식하기\n0. 나가기\n");
 
             Console.WriteLine(sb.ToString());
+        }
 
-            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.");
+        void Rest()
+        {
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 1);
 
             if (act == 0) // 나가기
             {
@@ -458,13 +469,21 @@ namespace task
                 return;
             }
 
-            if (Player.Gold >= cost)
+            if (Player.Gold >= _restCost) 
             {
-                
+                Player.Cure();
+                Player.Gold -= _restCost;
+
+                Console.Clear();
+                SetRest();
+
+                Console.WriteLine("휴식을 완료했습니다.");
+                Rest();
             }
             else
             {
-
+                Console.WriteLine("Gold 가 부족합니다.");
+                Rest();
             }
         }
 
