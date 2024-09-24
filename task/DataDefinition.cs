@@ -32,12 +32,12 @@ namespace DataDefinition
     /// </summary>
     public struct Item
     {
-        public int id;
-        public string name;
-        public string description;
-        public EItemType type;
-        public float value;
-        public int price;
+        public int id { get; set; }
+        public string name { get; set; }
+        public string description { get; set; }
+        public EItemType type { get; set; }
+        public float value { get; set; }
+        public int price { get; set; }
 
         public Item (int i, string n, string desc, EItemType t, int val, int p)
         {
@@ -130,13 +130,16 @@ namespace DataDefinition
         {
             // 초기화
             Items = [
-                // 방어구
+                // 기본 방어구
                 new Item(0, "수련자 갑옷", "수련에 도움을 주는 갑옷입니다.", EItemType.Armor, 5, 1000),
                 new Item(1, "무쇠갑옷", "무쇠로 만들어져 튼튼한 갑옷입니다.", EItemType.Armor, 9, 2000),
                 new Item(2, "스파르타의 갑옷", "스파르타의 전사들이 사용했다는 전설의 갑옷입니다.", EItemType.Armor, 15, 3500),
-                // 무기
+                // 기본 무기
                 new Item(3, "낡은 검", "쉽게 볼 수 있는 낡은 검 입니다.", EItemType.Weapon, 2, 600),
                 new Item(4, "청동 도끼", "어디선가 사용됐던거 같은 도끼입니다.", EItemType.Weapon, 5, 1500),
+                new Item(5, "스파르타의 창", "스파르타의 전사들이 사용했다는 전설의 창입니다.", EItemType.Weapon, 7, 2500),
+                
+                // 추가 방어구 및 무기
                 new Item(5, "스파르타의 창", "스파르타의 전사들이 사용했다는 전설의 창입니다.", EItemType.Weapon, 7, 2500),
             ];
 
@@ -152,7 +155,6 @@ namespace DataDefinition
             ];
 
             _gameData = new GameData();
-            _gameData.Player = new Character();
         }
 
         // 싱글톤 적용
@@ -207,17 +209,19 @@ namespace DataDefinition
         {
             return _gameData.Player;
         }
+        public Dictionary<int, bool> LoadSellingInfo()
+        {
+            return _gameData.ItemSellingInfo;
+        }
+        
 
         bool IsVaild(string text, out GameData data)
         {
-            JsonSerializerOptions opt = new JsonSerializerOptions();
-            opt.PropertyNameCaseInsensitive = true;
-
-            data = JsonSerializer.Deserialize<GameData>(text, opt);
+            data = JsonSerializer.Deserialize<GameData>(text);
             // 문제 2
             // class deserialize 시 null
             // 1. 접근성
-            // 2. 모델 프로퍼티화
+            // 2. 데이터 모델 프로퍼티화 여부
 
             if (data.Player == null)
                 return false;

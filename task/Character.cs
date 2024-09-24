@@ -9,9 +9,9 @@ namespace task
 {
     public class Character
     {
-        public string Name { get; protected set; }
+        public string Name { get; set; }
 
-        public EClass Class { get; protected set; }
+        public EClass Class { get; set; }
 
         public int Gold { get; set; }
 
@@ -42,16 +42,16 @@ namespace task
         /// <summary>
         /// 최대 생명력
         /// </summary>
-        public int MaxHealth { get; protected set; }
+        public int MaxHealth { get; set; }
 
         /// <summary>
         /// 기본 공격력
         /// </summary>
-        public float BaseAttack { get; protected set; }
+        public float BaseAttack { get; set; }
         /// <summary>
         /// 장비 적용 공격력
         /// </summary>
-        public float EquipAttack { get; protected set; }
+        public float EquipAttack { get; set; }
         /// <summary>
         /// 총합 공격력
         /// </summary>
@@ -63,11 +63,11 @@ namespace task
         /// <summary>
         /// 기본 방어력
         /// </summary>
-        public float BaseDefense { get; protected set; }
+        public float BaseDefense { get; set; }
         /// <summary>
         /// 장비 적용 방어력
         /// </summary>
-        public float EquipDefense { get; protected set; }
+        public float EquipDefense { get; set; }
         /// <summary>
         /// 총합 방어력
         /// </summary>
@@ -83,7 +83,7 @@ namespace task
         public int Level
         {
             get { return _lv; }
-            protected set
+            set
             {
                 if (value <= 0) return;
                 _lv = value;
@@ -120,11 +120,11 @@ namespace task
 
         #region ### INVENTORY ###
 
-        public Item[] OwnedItems { get; protected set; }
+        public Item[] OwnedItems { get; set; }
         // id - isEquipped
-        public Dictionary<int, bool> IsEquipped { get; protected set; }
-        // 장비별 1개 제약 type - id 
-        public Dictionary<EItemType, Item?> Equipment { get; protected set; }
+        public Dictionary<int, bool> IsEquipped { get; set; }
+        // 장비별 1개 제약 type - Item 
+        public Dictionary<EItemType, Item?> Equipment { get; set; }
 
         #endregion
 

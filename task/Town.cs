@@ -21,10 +21,14 @@ namespace task
         {
             Name = name;
             // 데이터 읽기
-            // 없으면 false 초기화
-            Item[] items = DataSet.GetInstance().Items;
-            for (int i = 0; i < items.Length; i++)
-                isSoldOut.Add(items[i].id, false);
+            isSoldOut = DataSet.GetInstance().LoadSellingInfo();
+
+            if(isSoldOut.Count != DataSet.GetInstance().Items.Length)
+            {
+                Item[] items = DataSet.GetInstance().Items;
+                for (int i = 0; i < items.Length; i++)
+                    isSoldOut.Add(items[i].id, false);
+            }
         }
 
         void ArriveScene()
