@@ -247,13 +247,5 @@ namespace DataDefinition
             return true;
         }
 
-        void DebugDeserialize(GameData data)
-        {
-            Console.WriteLine($"Player name : {data.Player.Name}");
-            Console.WriteLine($"Player BaseAttack : {data.Player.BaseAttack}");
-            Console.WriteLine($"Player EquipAttack : {data.Player.EquipAttack}");
-            Console.WriteLine($"Player  : {data.Player.EquipAttack}");
-            Console.WriteLine($"ItemSellingInfo : {data.ItemSellingInfo.Count}");
-        }
     }
 }

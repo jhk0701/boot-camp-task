@@ -115,6 +115,7 @@ namespace task
         /// 레벨 변경 시 호출
         /// </summary>
         protected Action<int> OnLevelChanged;
+
         #endregion
 
 
