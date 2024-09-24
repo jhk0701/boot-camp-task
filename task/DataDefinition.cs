@@ -140,7 +140,12 @@ namespace DataDefinition
                 new Item(5, "스파르타의 창", "스파르타의 전사들이 사용했다는 전설의 창입니다.", EItemType.Weapon, 7, 2500),
                 
                 // 추가 방어구 및 무기
-                new Item(5, "스파르타의 창", "스파르타의 전사들이 사용했다는 전설의 창입니다.", EItemType.Weapon, 7, 2500),
+                new Item(6, "비브라늄 방패", "방패지만 훌륭한 무기로 쓸 수 있습니다.", EItemType.Weapon, 9, 4000),
+                new Item(7, "묠니르", "번쩍번쩍", EItemType.Weapon, 9, 4000),
+                new Item(8, "활:매의 눈", "\"난 지금 힘이 없는 상태야. 활이랑 화살만 있음 딱 호크아이라고.\" - 데드풀", EItemType.Weapon, 9, 4000),
+                new Item(9, "다목적방탄복 1형", "\"방탄 플레이트 안 한 놈, 거수.\" - 중대장", EItemType.Armor, 20, 7000),
+                new Item(10, "아마조네스의 방어구", "원래 노출도와 성능은 비례하는 법이죠.", EItemType.Armor, 20, 7000),
+                new Item(11, "투명 망토", "입은 듯 안 입은 듯 편안하게", EItemType.Armor, 20, 7000)
             ];
 
             Dungeons = [
@@ -152,6 +157,7 @@ namespace DataDefinition
             CharacterInitDatas = [
                 new CharacterInitData("전사", 10f, 10f, 100),
                 new CharacterInitData("도적", 15f, 7f, 80),
+                new CharacterInitData("궁수", 12f, 10f, 80)
             ];
 
             _gameData = new GameData();

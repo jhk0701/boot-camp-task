@@ -27,7 +27,12 @@ namespace task
             {
                 Item[] items = DataSet.GetInstance().Items;
                 for (int i = 0; i < items.Length; i++)
+                {
+                    if (isSoldOut.ContainsKey(items[i].id))
+                        continue;
+
                     isSoldOut.Add(items[i].id, false);
+                }
             }
         }
 

@@ -52,9 +52,9 @@ namespace task
             Utility.ShowScript(
                 "원하시는 직업을 선택해주세요.\n\n",
 
-                "1. 전사\n2. 도적\n"
+                "1. 전사\n2. 도적\n3. 궁수"
             );
-            act = Utility.GetNumber("원하시는 행동을 선택해주세요.", 1, 2);
+            act = Utility.GetNumber("원하시는 행동을 선택해주세요.", 1, 3);
 
             // 직업 선택 > 플레이 저장 후 진행
             // 저장 후 마을로 이동
@@ -64,6 +64,8 @@ namespace task
                     return new Warrior(name);
                 case EClass.Thief:
                     return new Thief(name);
+                case EClass.Archer:
+                    return new Archer(name);
                 default:
                     return new Warrior(name);
             }
