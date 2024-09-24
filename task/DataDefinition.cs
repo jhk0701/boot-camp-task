@@ -139,19 +139,22 @@ namespace DataDefinition
                 new Item(4, "청동 도끼", "어디선가 사용됐던거 같은 도끼입니다.", EItemType.Weapon, 5, 1500),
                 new Item(5, "스파르타의 창", "스파르타의 전사들이 사용했다는 전설의 창입니다.", EItemType.Weapon, 7, 2500),
                 
-                // 추가 방어구 및 무기
+                // 추가 무기
                 new Item(6, "비브라늄 방패", "방패지만 훌륭한 무기로 쓸 수 있습니다.", EItemType.Weapon, 9, 4000),
-                new Item(7, "묠니르", "번쩍번쩍", EItemType.Weapon, 9, 4000),
-                new Item(8, "활:매의 눈", "\"난 지금 힘이 없는 상태야. 활이랑 화살만 있음 딱 호크아이라고.\" - 데드풀", EItemType.Weapon, 9, 4000),
+                new Item(7, "묠니르", "무겁다. 그리고 빛난다. 번쩍번쩍.", EItemType.Weapon, 9, 4000),
+                new Item(8, "매의 눈", "탄력이 좋은 활이다. 쭈아아아아아아압", EItemType.Weapon, 9, 4000),
+                // 추가 방어구
                 new Item(9, "다목적방탄복 1형", "\"방탄 플레이트 안 한 놈, 거수.\" - 중대장", EItemType.Armor, 20, 7000),
                 new Item(10, "아마조네스의 방어구", "원래 노출도와 성능은 비례하는 법이죠.", EItemType.Armor, 20, 7000),
                 new Item(11, "투명 망토", "입은 듯 안 입은 듯 편안하게", EItemType.Armor, 20, 7000)
             ];
 
             Dungeons = [
-                new Dungeon("쉬운 던전", 5, 1000),
-                new Dungeon("일반 던전", 11, 1700),
-                new Dungeon("어려운 던전", 17, 2500)
+                // 보상 조절
+                new Dungeon("쉬운 던전", 5, 500),
+                new Dungeon("일반 던전", 11, 1000),
+                new Dungeon("어려운 던전", 17, 1500),
+                new Dungeon("심연", 25, 5000)
             ];
 
             CharacterInitDatas = [
@@ -217,7 +220,10 @@ namespace DataDefinition
         }
         public Dictionary<int, bool> LoadSellingInfo()
         {
-            return _gameData.ItemSellingInfo;
+            if (_gameData.ItemSellingInfo == null)
+                return new Dictionary<int, bool>();
+            else
+                return _gameData.ItemSellingInfo;
         }
         
 

@@ -23,7 +23,7 @@ namespace task
             // 데이터 읽기
             isSoldOut = DataSet.GetInstance().LoadSellingInfo();
 
-            if(isSoldOut.Count != DataSet.GetInstance().Items.Length)
+            if (isSoldOut == null || isSoldOut.Count != DataSet.GetInstance().Items.Length)
             {
                 Item[] items = DataSet.GetInstance().Items;
                 for (int i = 0; i < items.Length; i++)
@@ -356,7 +356,7 @@ namespace task
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < dungeons.Length; i++)
-                sb.Append($"{i + 1}. {dungeons[i].name}\t| 방어력 {dungeons[i].recommendedDefense} 이상 권장\n");
+                sb.Append($"{i + 1}. {dungeons[i].name, -15}\t| 방어력 {dungeons[i].recommendedDefense} 이상 권장\n");
 
             sb.Append("0. 나가기\n");
             Console.WriteLine(sb.ToString());

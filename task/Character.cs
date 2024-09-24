@@ -25,7 +25,7 @@ namespace task
         public int Health
         {
             get { return _health; }
-            protected set
+            set
             {
                 _health = value;
 
