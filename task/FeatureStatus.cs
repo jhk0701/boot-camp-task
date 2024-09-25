@@ -8,6 +8,9 @@ using DataDefinition;
 
 namespace task
 {
+    /// <summary>
+    /// 상태보기 기능
+    /// </summary>
     class FeatureStatus : FeatureRoot
     {
         public FeatureStatus(string name, IScene parent) : base(name, parent) { }

@@ -20,7 +20,6 @@ namespace task
                 player = CreateCharacter();
                 DataSet.GetInstance().Save(player); // 최초 save
             }
-
             player.Awake();
 
             // 마을로 이동

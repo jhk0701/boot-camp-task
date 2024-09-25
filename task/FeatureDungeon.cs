@@ -8,6 +8,9 @@ using DataDefinition;
 
 namespace task
 {
+    /// <summary>
+    /// 던전 기능
+    /// </summary>
     class FeatureDungeon : FeatureRoot
     {
         public FeatureDungeon(string name, IScene parent) : base(name, parent) { }

@@ -2,6 +2,9 @@
 
 namespace task
 {
+    /// <summary>
+    /// 휴식 기능
+    /// </summary>
     class FeatureRest : FeatureRoot
     {
         int _restCost = 500;
