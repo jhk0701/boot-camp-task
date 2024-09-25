@@ -14,7 +14,7 @@ namespace task
         {
             Name = name;
 
-            Class = EClass.Warrior;
+            Class = EClass.Archer;
             Initialize(Class);
         }
 
