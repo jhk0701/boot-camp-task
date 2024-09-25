@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace task
 {
     /// <summary>
-    /// 휴식 기능
+    /// 기능 기본 구현 클래스
     /// </summary>
     class FeatureRoot : IFeature
     {

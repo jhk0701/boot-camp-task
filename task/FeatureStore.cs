@@ -8,6 +8,9 @@ using DataDefinition;
 
 namespace task
 {
+    /// <summary>
+    /// 상점 기능
+    /// </summary>
     class FeatureStore : FeatureRoot
     {
         // 상점 내 item 관련

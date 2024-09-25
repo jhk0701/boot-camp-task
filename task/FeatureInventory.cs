@@ -8,6 +8,9 @@ using DataDefinition;
 
 namespace task
 {
+    /// <summary>
+    /// 인벤토리 기능
+    /// </summary>
     class FeatureInventory : FeatureRoot
     {
 
