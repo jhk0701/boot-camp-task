@@ -93,6 +93,7 @@ namespace DataDefinition
         }
     }
 
+
     public class GameData
     {
         // 플레이어 정보
@@ -174,6 +175,9 @@ namespace DataDefinition
             return _instance;
         }
 
+
+        #region ### Save, Load ###
+
         public void Save()
         {
             JsonSerializerOptions opt = new JsonSerializerOptions();
@@ -183,8 +187,8 @@ namespace DataDefinition
             string data = JsonSerializer.Serialize(_gameData, opt);
             File.WriteAllText(FILE_PATH, data);
         }
-        public void Save(Character player) 
-        { 
+        public void Save(Character player)
+        {
             _gameData.Player = player;
             Save();
         }
@@ -206,7 +210,7 @@ namespace DataDefinition
             else
                 return false;
         }
-        
+
         bool IsVaild(string text, out GameData data)
         {
             try
@@ -227,7 +231,7 @@ namespace DataDefinition
             float expectedAttack = data.Player.Level * 0.5f + initData.attack;
             float expectedDefense = data.Player.Level * 1f + initData.defense;
             if (data.Player.BaseAttack > expectedAttack ||
-                data.Player.BaseDefense > expectedDefense || 
+                data.Player.BaseDefense > expectedDefense ||
                 data.Player.MaxHealth != initData.maxHealth)
                 return false;
 
@@ -240,5 +244,8 @@ namespace DataDefinition
         {
             return _gameData;
         }
+
+        #endregion
+
     }
 }

@@ -57,16 +57,20 @@ namespace task
 
         public void LeaveScene()
         {
-
+            DataSet.GetInstance().Save(Player);
+            Environment.Exit(0);
         }
 
         public void Act()
         {
-            Console.WriteLine("\n1. 상태 보기\n2. 인벤토리\n3. 상점\n4. 던전입장\n5. 휴식하기\n");
-            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 1, 5);
+            Utility.ShowScript("\n1. 상태 보기\n2. 인벤토리\n3. 상점\n4. 던전입장\n5. 휴식하기\n0. 종료\n");
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 5);
 
             switch (act)
             {
+                case 0: // 나가기
+                    LeaveScene();
+                    break;
                 case 1: // 상태 보기
                     ShowStatus();
                     break;
@@ -176,7 +180,10 @@ namespace task
             for (int i = 0; i < owned.Length; i++)
             {
                 bool isEquipped = equipped.ContainsKey(owned[i].id) && equipped[owned[i].id];
-                Utility.ShowScript($"- {(opt == 0 ? "" : i + 1)} {(isEquipped ? "[E]" : "")}{owned[i].GetDesc()}");
+                Utility.ShowScript(
+                    $"- {(opt == 0 ? "" : i + 1)} {(isEquipped ? "[E]" : "")}{owned[i].GetDesc()}",
+                    $"{((i + 1) % 5 == 0 ? "\n" : "")}"
+                );
             }
 
             Utility.ShowScript(
@@ -328,7 +335,8 @@ namespace task
 
                     opt == 2 ? 
                     $"| {items[i].price * 0.85,-10} G\n" :
-                    $"| {(isSoldOut[items[i].id] ? "구매완료" : items[i].price + " G"),-10}\n"
+                    $"| {(isSoldOut[items[i].id] ? "구매완료" : items[i].price + " G"),-10}\n",
+                    $"{((i + 1) % 5 == 0 ? "\n" : "")}"
                 );
             }
             Console.WriteLine(sb.ToString());
@@ -434,13 +442,26 @@ namespace task
 
                 Player.GetDamage(damage);
             }
+            
 
-            DataSet.GetInstance().Save(Player);
+            if (Player.Health == 0)
+            {
+                /// 데이터를 삭제할까
+                Utility.ShowScript(
+                    $"{Player.Name}이/가 사망에 이르는 부상을 입었습니다!\n",
+                    "...\n",
+                    "...\n",
+                    "...\n",
+                    "\"일어나세요, 용사여...\"\n"
+                );
+
+                Player.GetDamage(-1);
+            }
 
             Utility.ShowScript("0. 나가기\n");
-
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 0);
 
+            DataSet.GetInstance().Save(Player);
             ArriveScene();
         }
 
