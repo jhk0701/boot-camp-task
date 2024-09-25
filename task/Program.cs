@@ -10,18 +10,18 @@ namespace task
 
             // 데이터 로드 구간
             Character player;
-            if (DataSet.GetInstance().Load())
+            if (DataSet.GetInstance().Load()) // 데이터 로드
             {
-                // 데이터 로드
-                player = DataSet.GetInstance().LoadCharater();
+                player = DataSet.GetInstance().GetGameData().Player;
             }
             else
             {
-                // 없거나 유효하지 않으면 캐릭터 생성
+                // 없거나 유효하지 않으면 캐릭터 생성   
                 player = CreateCharacter();
                 DataSet.GetInstance().Save(player); // 최초 save
             }
 
+            player.Awake();
 
             // 마을로 이동
             IScene town = new Town("스파르타");
@@ -52,12 +52,13 @@ namespace task
             Utility.ShowScript(
                 "원하시는 직업을 선택해주세요.\n\n",
 
-                "1. 전사\n2. 도적\n3. 궁수"
+                "1. 전사\n2. 도적\n3. 궁수\n"
             );
             act = Utility.GetNumber("원하시는 행동을 선택해주세요.", 1, 3);
 
             // 직업 선택 > 플레이 저장 후 진행
             // 저장 후 마을로 이동
+            act--;
             switch ((EClass)act)
             {
                 case EClass.Warrior:

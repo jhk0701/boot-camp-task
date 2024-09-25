@@ -93,6 +93,7 @@ namespace DataDefinition
         }
     }
 
+
     public class GameData
     {
         // 플레이어 정보
@@ -139,19 +140,22 @@ namespace DataDefinition
                 new Item(4, "청동 도끼", "어디선가 사용됐던거 같은 도끼입니다.", EItemType.Weapon, 5, 1500),
                 new Item(5, "스파르타의 창", "스파르타의 전사들이 사용했다는 전설의 창입니다.", EItemType.Weapon, 7, 2500),
                 
-                // 추가 방어구 및 무기
+                // 추가 무기
                 new Item(6, "비브라늄 방패", "방패지만 훌륭한 무기로 쓸 수 있습니다.", EItemType.Weapon, 9, 4000),
-                new Item(7, "묠니르", "번쩍번쩍", EItemType.Weapon, 9, 4000),
-                new Item(8, "활:매의 눈", "\"난 지금 힘이 없는 상태야. 활이랑 화살만 있음 딱 호크아이라고.\" - 데드풀", EItemType.Weapon, 9, 4000),
+                new Item(7, "묠니르", "무겁다. 그리고 빛난다. 번쩍번쩍.", EItemType.Weapon, 9, 4000),
+                new Item(8, "매의 눈", "탄력이 좋은 활이다. 쭈아아아아아아압", EItemType.Weapon, 9, 4000),
+                // 추가 방어구
                 new Item(9, "다목적방탄복 1형", "\"방탄 플레이트 안 한 놈, 거수.\" - 중대장", EItemType.Armor, 20, 7000),
                 new Item(10, "아마조네스의 방어구", "원래 노출도와 성능은 비례하는 법이죠.", EItemType.Armor, 20, 7000),
                 new Item(11, "투명 망토", "입은 듯 안 입은 듯 편안하게", EItemType.Armor, 20, 7000)
             ];
 
             Dungeons = [
-                new Dungeon("쉬운 던전", 5, 1000),
-                new Dungeon("일반 던전", 11, 1700),
-                new Dungeon("어려운 던전", 17, 2500)
+                // 보상 조절
+                new Dungeon("쉬운 던전", 5, 500),
+                new Dungeon("일반 던전", 11, 1000),
+                new Dungeon("어려운 던전", 17, 1500),
+                new Dungeon("심연", 25, 5000)
             ];
 
             CharacterInitDatas = [
@@ -171,6 +175,9 @@ namespace DataDefinition
             return _instance;
         }
 
+
+        #region ### Save, Load ###
+
         public void Save()
         {
             JsonSerializerOptions opt = new JsonSerializerOptions();
@@ -179,17 +186,9 @@ namespace DataDefinition
 
             string data = JsonSerializer.Serialize(_gameData, opt);
             File.WriteAllText(FILE_PATH, data);
-
-            // 문제 1
-            // 데이터가 공백으로 출력
-            // https://stackoverflow.com/questions/58784499/system-text-json-jsonserializer-serialize-returns-empty-json-object
-            // https://stackoverflow.com/questions/58139759/how-to-use-class-fields-with-system-text-json-jsonserializer
-            // 해결
-            // In .NET Core 3.x 버전에선 클래스 필드를 직열화할 수 없었음.
-            // In .NET 5 버전 이후부터 옵션을 추가해서 내부 필드를 직열화할 수 있게 됨.
         }
-        public void Save(Character player) 
-        { 
+        public void Save(Character player)
+        {
             _gameData.Player = player;
             Save();
         }
@@ -211,41 +210,42 @@ namespace DataDefinition
             else
                 return false;
         }
-        public Character LoadCharater()
-        {
-            return _gameData.Player;
-        }
-        public Dictionary<int, bool> LoadSellingInfo()
-        {
-            return _gameData.ItemSellingInfo;
-        }
-        
 
         bool IsVaild(string text, out GameData data)
         {
-            data = JsonSerializer.Deserialize<GameData>(text);
-            // 문제 2
-            // class deserialize 시 null
-            // 1. 접근성
-            // 2. 데이터 모델 프로퍼티화 여부
+            try
+            {
+                data = JsonSerializer.Deserialize<GameData>(text);
+            }
+            catch
+            {
+                data = new GameData();
+                return false;
+            }
 
             if (data.Player == null)
                 return false;
 
             CharacterInitData initData = CharacterInitDatas[(int)data.Player.Class];
-            // 민감한 사항
-            // 공격력, 방어력, 체력 관련 수치 조작
+            // 민감한 사항 1. 공격력, 방어력, 체력 관련 수치 조작
             float expectedAttack = data.Player.Level * 0.5f + initData.attack;
             float expectedDefense = data.Player.Level * 1f + initData.defense;
             if (data.Player.BaseAttack > expectedAttack ||
-                data.Player.BaseDefense > expectedDefense || 
+                data.Player.BaseDefense > expectedDefense ||
                 data.Player.MaxHealth != initData.maxHealth)
                 return false;
 
-            // 더 높은 수준의 유효성 검사가 필요함.
+            // 더 엄격한 유효성 검사가 필요함.
 
             return true;
         }
+
+        public GameData GetGameData()
+        {
+            return _gameData;
+        }
+
+        #endregion
 
     }
 }

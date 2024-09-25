@@ -18,6 +18,10 @@ namespace task
 
         #region ### STATUS ###
 
+        /// <summary>
+        /// 최대 생명력
+        /// </summary>
+        public int MaxHealth { get; set; }
         int _health;
         /// <summary>
         /// 현재 생명력
@@ -25,24 +29,16 @@ namespace task
         public int Health
         {
             get { return _health; }
-            protected set
+            set
             {
                 _health = value;
 
                 if (_health <= 0) // dead
-                {
                     _health = 0;
-                }
                 else if (_health > MaxHealth)
-                {
                     _health = MaxHealth;
-                }
             }
         }
-        /// <summary>
-        /// 최대 생명력
-        /// </summary>
-        public int MaxHealth { get; set; }
 
         /// <summary>
         /// 기본 공격력
@@ -147,7 +143,10 @@ namespace task
 
             BaseAttack = initData.attack;
             BaseDefense = initData.defense;
+        }
 
+        public void Awake()
+        {
             OnLevelChanged = (int lv) =>
             {
                 Console.WriteLine($"레벨이 올랐습니다!\n현재 레벨 : {lv}\n");
@@ -248,14 +247,6 @@ namespace task
                 IsEquipped[item.id] = true;
                 AdjustEquip(item.type, item.value, true);
             }
-
-            // 장착 기능
-            //if (_isEquipped.ContainsKey(item.id))
-            //    _isEquipped[item.id] = !_isEquipped[item.id];
-            //else
-            //    _isEquipped[item.id] = true;
-
-            //AdjustEquip(item.type, item.value, _isEquipped[item.id]);
         }
 
         /// <summary>

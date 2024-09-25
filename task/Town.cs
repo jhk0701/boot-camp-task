@@ -21,9 +21,11 @@ namespace task
         {
             Name = name;
             // 데이터 읽기
-            isSoldOut = DataSet.GetInstance().LoadSellingInfo();
+            isSoldOut = DataSet.GetInstance().GetGameData().ItemSellingInfo;
+            if (isSoldOut == null)
+                isSoldOut = new Dictionary<int, bool>();
 
-            if(isSoldOut.Count != DataSet.GetInstance().Items.Length)
+            if (isSoldOut.Count != DataSet.GetInstance().Items.Length)
             {
                 Item[] items = DataSet.GetInstance().Items;
                 for (int i = 0; i < items.Length; i++)
@@ -55,16 +57,20 @@ namespace task
 
         public void LeaveScene()
         {
-
+            DataSet.GetInstance().Save(Player);
+            Environment.Exit(0);
         }
 
         public void Act()
         {
-            Console.WriteLine("\n1. 상태 보기\n2. 인벤토리\n3. 상점\n4. 던전입장\n5. 휴식하기\n");
-            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 1, 5);
+            Utility.ShowScript("\n1. 상태 보기\n2. 인벤토리\n3. 상점\n4. 던전입장\n5. 휴식하기\n0. 종료\n");
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 5);
 
             switch (act)
             {
+                case 0: // 나가기
+                    LeaveScene();
+                    break;
                 case 1: // 상태 보기
                     ShowStatus();
                     break;
@@ -94,7 +100,7 @@ namespace task
             string className = DataSet.GetInstance().CharacterInitDatas[(int)Player.Class].name;
 
             Utility.ShowScript(
-                $"Lv. {string.Format("{0:0#}", Player.Level)} ({Player.Exp / (float)Player.Level * 100f }%)\n",
+                $"Lv. {string.Format("{0:0#}", Player.Level)} ({string.Format("{0:N2}", Player.Exp / (float)Player.Level * 100f)}%)\n",
                 $"{Player.Name} ( {className} )\n",
                 $"공격력 : {Player.BaseAttack} {(Player.EquipAttack > 0 ? $"(+{Player.EquipAttack})" : "")}\n",
                 $"방어력 : {Player.BaseDefense} {(Player.EquipDefense > 0 ? $"(+{Player.EquipDefense})" : "")}\n",
@@ -174,10 +180,14 @@ namespace task
             for (int i = 0; i < owned.Length; i++)
             {
                 bool isEquipped = equipped.ContainsKey(owned[i].id) && equipped[owned[i].id];
-                Utility.ShowScript($"- {(opt == 0 ? "" : i + 1)} {(isEquipped ? "[E]" : "")}{owned[i].GetDesc()}\n\n");
+                Utility.ShowScript(
+                    $"- {(opt == 0 ? "" : i + 1)} {(isEquipped ? "[E]" : "")}{owned[i].GetDesc()}",
+                    $"{((i + 1) % 5 == 0 ? "\n" : "")}"
+                );
             }
 
             Utility.ShowScript(
+                "\n",
                 opt == 0 ?
                 "1. 장착 관리\n0. 나가기\n" :
                 "0. 나가기\n"
@@ -325,7 +335,8 @@ namespace task
 
                     opt == 2 ? 
                     $"| {items[i].price * 0.85,-10} G\n" :
-                    $"| {(isSoldOut[items[i].id] ? "구매완료" : items[i].price + " G"),-10}\n"
+                    $"| {(isSoldOut[items[i].id] ? "구매완료" : items[i].price + " G"),-10}\n",
+                    $"{((i + 1) % 5 == 0 ? "\n" : "")}"
                 );
             }
             Console.WriteLine(sb.ToString());
@@ -351,22 +362,38 @@ namespace task
             Console.Clear();
             Utility.ShowScript(
                 "던전입장\n",
-                "이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.\n"
+                "이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.\n",
+                $"플레이어의 체력이 20이하라면 입장할 수 없습니다. (현재 체력 : {Player.Health})\n"
             );
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < dungeons.Length; i++)
-                sb.Append($"{i + 1}. {dungeons[i].name}\t| 방어력 {dungeons[i].recommendedDefense} 이상 권장\n");
+                sb.Append($"{i + 1}. {dungeons[i].name,-15}\t| 방어력 {dungeons[i].recommendedDefense} 이상 권장\n");
 
             sb.Append("0. 나가기\n");
             Console.WriteLine(sb.ToString());
 
+            SelectDungeon(ref dungeons);
+        }
 
+        void SelectDungeon(ref Dungeon[] dungeons)
+        {
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, dungeons.Length);
 
-            if(act == 0) // 나가기
+            if (act == 0) // 나가기
             {
                 ArriveScene();
+                return;
+            }
+
+            if(Player.Health <= 20)
+            {
+                Utility.ShowScript(
+                    "\"용사님, 부상이 너무 심하셔요.\"\n",
+                    "던전에 들어가려는 순간 경비병이 막아섰다.\n"
+                );
+
+                SelectDungeon(ref dungeons);
                 return;
             }
 
@@ -431,13 +458,26 @@ namespace task
 
                 Player.GetDamage(damage);
             }
+            
 
-            DataSet.GetInstance().Save(Player);
+            if (Player.Health == 0)
+            {
+                /// 데이터를 삭제할까
+                Utility.ShowScript(
+                    $"{Player.Name}이/가 사망에 이르는 부상을 입었습니다!\n",
+                    "...\n",
+                    "...\n",
+                    "...\n",
+                    "\"일어나세요, 용사여...\"\n"
+                );
+
+                Player.GetDamage(-1);
+            }
 
             Utility.ShowScript("0. 나가기\n");
-
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 0);
 
+            DataSet.GetInstance().Save(Player);
             ArriveScene();
         }
 
@@ -485,6 +525,8 @@ namespace task
                 SetRest();
 
                 Utility.ShowScript("휴식을 완료했습니다.");
+                DataSet.GetInstance().Save(Player);
+
                 Rest();
             }
             else
