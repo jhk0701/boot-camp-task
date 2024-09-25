@@ -362,22 +362,38 @@ namespace task
             Console.Clear();
             Utility.ShowScript(
                 "던전입장\n",
-                "이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.\n"
+                "이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.\n",
+                $"플레이어의 체력이 20이하라면 입장할 수 없습니다. (현재 체력 : {Player.Health})\n"
             );
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < dungeons.Length; i++)
-                sb.Append($"{i + 1}. {dungeons[i].name, -15}\t| 방어력 {dungeons[i].recommendedDefense} 이상 권장\n");
+                sb.Append($"{i + 1}. {dungeons[i].name,-15}\t| 방어력 {dungeons[i].recommendedDefense} 이상 권장\n");
 
             sb.Append("0. 나가기\n");
             Console.WriteLine(sb.ToString());
 
+            SelectDungeon(ref dungeons);
+        }
 
+        void SelectDungeon(ref Dungeon[] dungeons)
+        {
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, dungeons.Length);
 
-            if(act == 0) // 나가기
+            if (act == 0) // 나가기
             {
                 ArriveScene();
+                return;
+            }
+
+            if(Player.Health <= 20)
+            {
+                Utility.ShowScript(
+                    "\"용사님, 부상이 너무 심하셔요.\"\n",
+                    "던전에 들어가려는 순간 경비병이 막아섰다.\n"
+                );
+
+                SelectDungeon(ref dungeons);
                 return;
             }
 
