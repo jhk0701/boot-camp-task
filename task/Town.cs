@@ -64,8 +64,8 @@ namespace task
         public void Act()
         {
             Utility.ShowScript("\n1. 상태 보기\n2. 인벤토리\n3. 상점\n4. 던전입장\n5. 휴식하기\n0. 종료\n");
-            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 5);
 
+            int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 5);
             switch (act)
             {
                 case 0: // 나가기
@@ -89,6 +89,11 @@ namespace task
             }
         }
 
+        // <전반적인 구조>
+        // Show 호출
+        // 스크립트 표시 Set
+        // 선택지 선택 Select
+        // 선택 결과 표시 
 
         #region ### 상태 보기 ###
 
@@ -105,11 +110,11 @@ namespace task
                 $"공격력 : {Player.BaseAttack} {(Player.EquipAttack > 0 ? $"(+{Player.EquipAttack})" : "")}\n",
                 $"방어력 : {Player.BaseDefense} {(Player.EquipDefense > 0 ? $"(+{Player.EquipDefense})" : "")}\n",
                 $"체력 : {Player.Health} / {Player.MaxHealth}\n",
-                $"Gold : {Player.Gold} G\n"
+                $"Gold : {Player.Gold} G\n\n",
+
+                "0. 나가기\n"
             );
 
-
-            Console.WriteLine("0. 나가기\n");
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 0);
 
             ArriveScene();
@@ -126,7 +131,6 @@ namespace task
             SetInventoryInfo();
 
             int act = Utility.GetNumber("원하시는 행동을 입력해주세요.", 0, 1);
-
             if (act == 0) // 나가기
             {
                 ArriveScene();
@@ -136,6 +140,7 @@ namespace task
             // 장착 관리
             EquipItem();
         }
+
 
         void EquipItem()
         {
@@ -348,7 +353,6 @@ namespace task
                 "0. 나가기\n"
             );
         }
-
 
         #endregion
 

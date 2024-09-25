@@ -13,6 +13,5 @@ namespace task
 
         void ArriveScene(Character player);
         void LeaveScene();
-        void Act();
     }
 }
